@@ -1,0 +1,71 @@
+@model List<ReaderSummaryItem>
+@{
+    ViewData["Title"] = "Độc giả";
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Thành viên thư viện</span>
+        <h1 class="h3 fw-bold mb-1">Danh sách Độc giả (@Model.Count)</h1>
+        <p class="text-white-50 mb-0 small">Thông tin liên hệ độc giả và tình trạng mượn sách hiện tại.</p>
+    </div>
+    <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index">
+        <span>← Về Dashboard</span>
+    </a>
+</section>
+
+@if (ViewBag.DatabaseError != null)
+{
+    <div class="alert alert-danger">@ViewBag.DatabaseError</div>
+}
+
+<div class="lib-panel">
+    <div class="table-responsive">
+        <table class="table lib-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Họ và tên</th>
+                    <th>Số điện thoại</th>
+                    <th>Email</th>
+                    <th class="text-center">Tổng lượt mượn</th>
+                    <th class="text-center">Tình trạng</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="text-muted">#@item.Reader.Id</td>
+                        <td class="fw-semibold">@item.Reader.FullName</td>
+                        <td>@item.Reader.Phone</td>
+                        <td>@item.Reader.Email</td>
+                        <td class="text-center">@item.TotalBorrowCount</td>
+                        <td class="text-center">
+                            @if (item.OverdueBorrowCount > 0)
+                            {
+                                <span class="badge rounded-pill text-bg-danger">Có @item.OverdueBorrowCount phiếu quá hạn</span>
+                            }
+                            else if (item.ActiveBorrowCount > 0)
+                            {
+                                <span class="badge rounded-pill text-bg-warning">Đang mượn (@item.ActiveBorrowCount)</span>
+                            }
+                            else
+                            {
+                                <span class="badge rounded-pill text-bg-success">Không nợ sách</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a class="btn-lib btn-lib-outline btn-sm py-1 px-3"
+                               asp-controller="Home" asp-action="Borrows">
+                                <span>Xem phiếu mượn</span>
+                                <span class="lib-arrow">→</span>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

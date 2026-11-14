@@ -1,0 +1,106 @@
+@model BooksCatalogViewModel
+@{
+    ViewData["Title"] = "Kho sách";
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Danh mục tài liệu</span>
+        <h1 class="h3 fw-bold mb-1">Kho sách Thư viện (@Model.Books.Count đầu sách)</h1>
+        <p class="text-white-50 mb-0 small">Tìm kiếm theo tên sách, tác giả hoặc lọc theo thể loại và tình trạng còn kho.</p>
+    </div>
+    <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index">
+        <span>← Về Dashboard</span>
+    </a>
+</section>
+
+@if (ViewBag.DatabaseError != null)
+{
+    <div class="alert alert-danger">@ViewBag.DatabaseError</div>
+}
+
+<div class="lib-panel p-3 p-md-4 mb-4">
+    <form method="get" asp-controller="Home" asp-action="Books" class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label fw-semibold small" for="search">Từ khóa tìm kiếm</label>
+            <input id="search" name="search" value="@Model.SearchTerm" class="form-control"
+                   placeholder="Nhập tên sách, tác giả hoặc thể loại..." />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold small" for="categoryId">Thể loại</label>
+            <select id="categoryId" name="categoryId" class="form-select">
+                <option value="">-- Tất cả thể loại --</option>
+                @foreach (var cat in Model.Categories)
+                {
+                    <option value="@cat.Id" selected="@(Model.SelectedCategoryId == cat.Id ? "selected" : null)">
+                        @cat.Name (@cat.Books.Count)
+                    </option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold small" for="availability">Trạng thái kho</label>
+            <select id="availability" name="availability" class="form-select">
+                <option value="all" selected="@(Model.AvailabilityFilter == "all" ? "selected" : null)">Tất cả</option>
+                <option value="available" selected="@(Model.AvailabilityFilter == "available" ? "selected" : null)">Còn trong kho</option>
+                <option value="borrowed" selected="@(Model.AvailabilityFilter == "borrowed" ? "selected" : null)">Đang được mượn</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn-lib btn-lib-navy w-100">Lọc</button>
+            <a class="btn-lib btn-lib-outline" asp-controller="Home" asp-action="Books" title="Xóa bộ lọc">↺</a>
+        </div>
+    </form>
+</div>
+
+<div class="lib-panel">
+    <div class="table-responsive">
+        <table class="table lib-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên sách</th>
+                    <th>Tác giả</th>
+                    <th>Thể loại</th>
+                    <th class="text-center">Năm XB</th>
+                    <th class="text-center">Tổng SL</th>
+                    <th class="text-center">Còn lại</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Books.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            Không tìm thấy đầu sách nào phù hợp với điều kiện lọc.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var book in Model.Books)
+                    {
+                        <tr>
+                            <td class="text-muted">#@book.Id</td>
+                            <td class="fw-semibold">@book.Title</td>
+                            <td>@book.Author</td>
+                            <td>
+                                <a class="badge rounded-pill text-bg-light border text-decoration-none text-dark"
+                                   asp-controller="Home" asp-action="Books" asp-route-categoryId="@book.CategoryId">
+                                    @book.Category?.Name
+                                </a>
+                            </td>
+                            <td class="text-center">@book.PublishYear</td>
+                            <td class="text-center fw-medium">@book.Quantity</td>
+                            <td class="text-center">
+                                <span class="badge rounded-pill @(book.Available > 0 ? "text-bg-success" : "text-bg-danger")">
+                                    @book.Available
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

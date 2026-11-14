@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Logo Quản Lý Thư Viện">
+  <defs>
+    <linearGradient id="badgeGrad" x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E3A5F" />
+      <stop offset="100%" stop-color="#0F766E" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="20" y1="14" x2="44" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#badgeGrad)" stroke="#FBBF24" stroke-width="2.5" />
+  <!-- Left open page -->
+  <path d="M16 21C16 19.3431 17.3431 18 19 18H28.5C30.433 18 32 19.567 32 21.5V45.5C32 44.1193 30.8807 43 29.5 43H18.5C17.1193 43 16 41.8807 16 40.5V21Z" fill="#FFFFFF" fill-opacity="0.96" />
+  <!-- Right open page -->
+  <path d="M48 21C48 19.3431 46.6569 18 45 18H35.5C33.567 18 32 19.567 32 21.5V45.5C32 44.1193 33.1193 43 34.5 43H45.5C46.8807 43 48 41.8807 48 40.5V21Z" fill="#F8FAFC" fill-opacity="0.92" />
+  <!-- Center spine & bookmark ribbon -->
+  <path d="M32 20V47" stroke="#CBD5E1" stroke-width="1.5" />
+  <path d="M37 18H43V32L40 29.5L37 32V18Z" fill="url(#goldGrad)" />
+  <!-- Text lines on left page -->
+  <path d="M20 25H28M20 30H28M20 35H26" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round" opacity="0.65" />
+  <!-- Text lines on right page -->
+  <path d="M36 35H44M36 39H42" stroke="#0F766E" stroke-width="2" stroke-linecap="round" opacity="0.65" />
+</svg>

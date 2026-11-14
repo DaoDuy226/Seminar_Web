@@ -1,0 +1,51 @@
+@model List<Category>
+@{
+    ViewData["Title"] = "Thể loại sách";
+    var themes = new[] { "theme-navy", "theme-teal", "theme-amber", "theme-info", "theme-danger" };
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Phân loại tài liệu</span>
+        <h1 class="h3 fw-bold mb-1">Thể loại sách (@Model.Count thể loại)</h1>
+        <p class="text-white-50 mb-0 small">Chọn một thể loại bất kỳ để chuyển thẳng tới danh sách sách thuộc thể loại đó.</p>
+    </div>
+    <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index">
+        <span>← Về Dashboard</span>
+    </a>
+</section>
+
+@if (ViewBag.DatabaseError != null)
+{
+    <div class="alert alert-danger">@ViewBag.DatabaseError</div>
+}
+
+<div class="row g-4">
+    @for (var i = 0; i < Model.Count; i++)
+    {
+        var cat = Model[i];
+        var theme = themes[i % themes.Length];
+        var totalCopies = cat.Books.Sum(b => b.Quantity);
+        var availableCopies = cat.Books.Sum(b => b.Available);
+        <div class="col-md-6 col-lg-4">
+            <a class="lib-card-link" asp-controller="Home" asp-action="Books" asp-route-categoryId="@cat.Id">
+                <div class="lib-interactive-card @theme p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge rounded-pill text-bg-light border px-3 py-2">@cat.Books.Count đầu sách</span>
+                        <span class="lib-card-arrow fs-5 fw-bold text-muted">→</span>
+                    </div>
+                    <h2 class="h5 fw-bold text-dark mb-2">@cat.Name</h2>
+                    <p class="text-muted small mb-3">
+                        Tổng <strong>@totalCopies</strong> cuốn · Còn sẵn <strong>@availableCopies</strong> cuốn trong kho.
+                    </p>
+                    <ul class="list-unstyled small text-secondary mb-0 mt-auto">
+                        @foreach (var b in cat.Books.Take(3))
+                        {
+                            <li class="mb-1">• @b.Title</li>
+                        }
+                    </ul>
+                </div>
+            </a>
+        </div>
+    }
+</div>

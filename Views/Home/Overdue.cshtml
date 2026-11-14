@@ -1,0 +1,73 @@
+@model List<BorrowRecord>
+@{
+    ViewData["Title"] = "Phiếu quá hạn";
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3"
+         style="background: linear-gradient(120deg, #7F1D1D 0%, #B91C1C 60%, #1E3A5F 100%);">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Cảnh báo nhắc trả</span>
+        <h1 class="h3 fw-bold mb-1">Danh sách Phiếu Quá Hạn (@Model.Count)</h1>
+        <p class="text-white-50 mb-0 small">Các phiếu mượn chưa trả có ngày hẹn trả đã qua, sắp xếp theo mức độ trễ lâu nhất.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Borrows">Xem tất cả phiếu</a>
+        <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index">← Về Dashboard</a>
+    </div>
+</section>
+
+@if (ViewBag.DatabaseError != null)
+{
+    <div class="alert alert-danger">@ViewBag.DatabaseError</div>
+}
+
+<div class="lib-panel">
+    <div class="table-responsive">
+        <table class="table lib-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Độc giả &amp; Liên hệ</th>
+                    <th>Sách đang giữ</th>
+                    <th>Ngày mượn</th>
+                    <th>Hạn trả</th>
+                    <th class="text-center">Số ngày trễ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-success fw-medium">
+                            Hiện không có phiếu mượn nào quá hạn.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var br in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold text-danger">#@br.Id</td>
+                            <td>
+                                <div class="fw-semibold">@br.Reader?.FullName</div>
+                                <div class="small text-muted">@br.Reader?.Phone · @br.Reader?.Email</div>
+                            </td>
+                            <td>
+                                @foreach (var d in br.BorrowDetails)
+                                {
+                                    <div>@d.Book?.Title <span class="text-muted small">(x@d.Quantity)</span></div>
+                                }
+                            </td>
+                            <td>@br.BorrowDate.ToString("dd/MM/yyyy")</td>
+                            <td class="fw-medium text-danger">@br.DueDate.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center">
+                                <span class="badge rounded-pill text-bg-danger px-3 py-2">Trễ @br.OverdueDays ngày</span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

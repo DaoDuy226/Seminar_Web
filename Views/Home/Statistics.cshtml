@@ -1,0 +1,69 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Thống kê Thư viện";
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Phân tích số liệu</span>
+        <h1 class="h3 fw-bold mb-1">Thống kê Kho sách &amp; Lượt mượn</h1>
+        <p class="text-white-50 mb-0 small">Tổng hợp trực tiếp từ SQL Server bằng truy vấn LINQ trên EF Core.</p>
+    </div>
+    <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index">
+        <span>← Về Dashboard</span>
+    </a>
+</section>
+
+@if (ViewBag.DatabaseError != null)
+{
+    <div class="alert alert-danger">@ViewBag.DatabaseError</div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="lib-interactive-card theme-navy p-3">
+            <div class="text-muted small">Tổng bản sách</div>
+            <div class="fs-2 fw-bold" style="color: #1E3A5F;">@Model.TotalBooks</div>
+            <div class="small text-secondary">@Model.TotalBookTitles đầu sách</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="lib-interactive-card theme-teal p-3">
+            <div class="text-muted small">Còn sẵn trong kho</div>
+            <div class="fs-2 fw-bold text-success">@Model.AvailableBooks</div>
+            <div class="small text-secondary">
+                Tỷ lệ sẵn sàng @(Model.TotalBooks > 0 ? Math.Round(100.0 * Model.AvailableBooks / Model.TotalBooks, 1) : 0)%
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="lib-interactive-card theme-amber p-3">
+            <div class="text-muted small">Đang cho mượn</div>
+            <div class="fs-2 fw-bold text-warning">@(Model.TotalBooks - Model.AvailableBooks)</div>
+            <div class="small text-secondary">@Model.ActiveBorrowCount phiếu chưa trả</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <a class="lib-card-link" asp-controller="Home" asp-action="Overdue">
+            <div class="lib-interactive-card theme-danger p-3">
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted small">Phiếu quá hạn</span>
+                    <span class="lib-card-arrow fw-bold text-muted">→</span>
+                </div>
+                <div class="fs-2 fw-bold text-danger">@Model.OverdueBorrowCount</div>
+                <div class="small text-secondary">Nhấn để xem chi tiết</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="lib-panel p-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <h2 class="h5 fw-bold mb-0">Khu vực biểu đồ thống kê (#14)</h2>
+        <span class="badge text-bg-light border">Sẵn sàng tích hợp Chart.js</span>
+    </div>
+    <p class="text-muted mb-0">
+        Khung số liệu tổng quan đã nối dữ liệu thực từ SQL Server (@Model.TotalCategories thể loại, @Model.TotalReaders độc giả).
+        Phần biểu đồ Chart.js và lọc lịch sử theo khoảng ngày sẽ được gắn vào đây ở task #14.
+    </p>
+</div>

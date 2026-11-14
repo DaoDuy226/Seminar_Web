@@ -1,0 +1,233 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+@if (ViewBag.DatabaseError != null)
+{
+    <div class="alert alert-danger border-2 shadow-sm mb-4" role="alert">
+        <strong>Lỗi kết nối CSDL:</strong> @ViewBag.DatabaseError
+    </div>
+}
+
+<!-- Hero Banner -->
+<section class="lib-hero p-4 p-lg-5 mb-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <span class="lib-hero-badge mb-3">
+                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92z" />
+                </svg>
+                Cổng thông tin Thư viện · SE347
+            </span>
+            <h1 class="display-6 fw-bold mb-3">
+                Quản lý Kho sách, Độc giả &amp; Mượn Trả thông minh
+            </h1>
+            <p class="text-white-50 fs-6 mb-4">
+                Theo dõi trực tiếp số lượng sách tồn kho, lịch sử mượn trả và cảnh báo phiếu quá hạn được kết nối từ SQL Server qua Entity Framework Core Code First.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn-lib btn-lib-amber" asp-controller="Home" asp-action="Books">
+                    <span>Khám phá kho sách</span>
+                    <span class="lib-arrow">→</span>
+                </a>
+                <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Overdue">
+                    <span>Phiếu quá hạn (@Model.OverdueBorrowCount)</span>
+                    <span class="lib-arrow">→</span>
+                </a>
+                <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Statistics">
+                    <span>Báo cáo thống kê</span>
+                    <span class="lib-arrow">→</span>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="lib-hero-media">
+                <img src="~/images/library-banner.jpg" alt="Không gian thư viện số hiện đại" class="lib-hero-img" />
+                <div class="lib-hero-float-pill d-flex justify-content-between align-items-center">
+                    <span><strong>@Model.TotalBookTitles</strong> đầu sách · <strong>@Model.TotalCategories</strong> thể loại</span>
+                    <span class="badge text-bg-warning text-dark">SQL Server Live</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 5 Thẻ số liệu (Ấn vào để chuyển hướng trực tiếp tới từng chức năng) -->
+<section class="mb-4">
+    <div class="row g-3">
+        <div class="col-6 col-md-4 col-lg">
+            <a class="lib-card-link" asp-controller="Home" asp-action="Books">
+                <div class="lib-stat-card theme-navy p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="lib-icon-box bg-primary-subtle text-primary">
+                            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z" />
+                            </svg>
+                        </div>
+                        <span class="lib-card-arrow text-muted fw-bold">→</span>
+                    </div>
+                    <div class="text-muted small fw-medium">Tổng số sách</div>
+                    <div class="fs-2 fw-bold" style="color: #1E3A5F;">@Model.TotalBooks</div>
+                    <div class="small text-secondary">@Model.TotalBookTitles đầu sách</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg">
+            <a class="lib-card-link" asp-controller="Home" asp-action="Books" asp-route-availability="available">
+                <div class="lib-stat-card theme-teal p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="lib-icon-box bg-success-subtle text-success">
+                            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                            </svg>
+                        </div>
+                        <span class="lib-card-arrow text-muted fw-bold">→</span>
+                    </div>
+                    <div class="text-muted small fw-medium">Còn trong kho</div>
+                    <div class="fs-2 fw-bold text-success">@Model.AvailableBooks</div>
+                    <div class="small text-secondary">Sẵn sàng cho mượn</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg">
+            <a class="lib-card-link" asp-controller="Home" asp-action="Readers">
+                <div class="lib-stat-card theme-info p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="lib-icon-box bg-info-subtle text-info">
+                            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
+                            </svg>
+                        </div>
+                        <span class="lib-card-arrow text-muted fw-bold">→</span>
+                    </div>
+                    <div class="text-muted small fw-medium">Độc giả</div>
+                    <div class="fs-2 fw-bold text-info">@Model.TotalReaders</div>
+                    <div class="small text-secondary">Đã đăng ký</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-6 col-lg">
+            <a class="lib-card-link" asp-controller="Home" asp-action="Borrows">
+                <div class="lib-stat-card theme-amber p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="lib-icon-box bg-warning-subtle text-warning">
+                            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5M5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z" />
+                                <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1" />
+                            </svg>
+                        </div>
+                        <span class="lib-card-arrow text-muted fw-bold">→</span>
+                    </div>
+                    <div class="text-muted small fw-medium">Đang mượn</div>
+                    <div class="fs-2 fw-bold text-warning">@Model.ActiveBorrowCount</div>
+                    <div class="small text-secondary">Phiếu chưa trả</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg">
+            <a class="lib-card-link" asp-controller="Home" asp-action="Overdue">
+                <div class="lib-stat-card theme-danger p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="lib-icon-box bg-danger-subtle text-danger">
+                            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                            </svg>
+                        </div>
+                        <span class="lib-card-arrow text-muted fw-bold">→</span>
+                    </div>
+                    <div class="text-muted small fw-medium">Quá hạn</div>
+                    <div class="fs-2 fw-bold text-danger">@Model.OverdueBorrowCount</div>
+                    <div class="small text-secondary">Cần nhắc trả</div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Trung tâm điều hướng -->
+<section class="lib-panel mb-4">
+    <div class="row g-0 align-items-center">
+        <div class="col-md-5">
+            <img src="~/images/library-collection.jpg" alt="Góc đọc sách và bộ sưu tập thư viện"
+                 class="w-100 h-100" style="min-height: 220px; max-height: 270px; object-fit: cover;" />
+        </div>
+        <div class="col-md-7 p-4">
+            <span class="badge text-bg-warning text-dark mb-2">Truy cập nhanh</span>
+            <h2 class="h4 fw-bold mb-2">Trung tâm điều hướng</h2>
+            <p class="text-muted mb-3">
+                Chuyển nhanh tới trang quản lý độc giả, danh sách phiếu mượn trả, phân loại thể loại hoặc trang thống kê thư viện.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn-lib btn-lib-navy" asp-controller="Home" asp-action="Borrows">
+                    <span>Quản lý Mượn / Trả</span>
+                    <span class="lib-arrow">→</span>
+                </a>
+                <a class="btn-lib btn-lib-outline" asp-controller="Home" asp-action="Readers">
+                    <span>Danh sách Độc giả (@Model.TotalReaders)</span>
+                    <span class="lib-arrow">→</span>
+                </a>
+                <a class="btn-lib btn-lib-outline" asp-controller="Home" asp-action="Categories">
+                    <span>Thể loại sách (@Model.TotalCategories)</span>
+                    <span class="lib-arrow">→</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sách tiêu biểu trong kho -->
+<section class="lib-panel">
+    <div class="lib-panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <h2 class="h5 fw-bold mb-0">Sách tiêu biểu trong kho</h2>
+            <div class="small text-muted">Hiển thị 8 đầu sách mẫu đầu tiên trong tổng số @Model.TotalBookTitles đầu sách</div>
+        </div>
+        <a class="btn-lib btn-lib-navy btn-sm py-1 px-3" asp-controller="Home" asp-action="Books">
+            <span>Xem toàn bộ @Model.TotalBookTitles đầu sách</span>
+            <span class="lib-arrow">→</span>
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="table lib-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên sách</th>
+                    <th>Tác giả</th>
+                    <th>Thể loại</th>
+                    <th class="text-center">Năm XB</th>
+                    <th class="text-center">Tổng</th>
+                    <th class="text-center">Còn lại</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var book in Model.Books)
+                {
+                    <tr>
+                        <td class="text-muted">#@book.Id</td>
+                        <td class="fw-semibold">@book.Title</td>
+                        <td>@book.Author</td>
+                        <td>
+                            <a class="badge rounded-pill text-bg-light border text-decoration-none text-dark"
+                               asp-controller="Home" asp-action="Books" asp-route-categoryId="@book.CategoryId">
+                                @book.Category?.Name
+                            </a>
+                        </td>
+                        <td class="text-center">@book.PublishYear</td>
+                        <td class="text-center fw-medium">@book.Quantity</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill @(book.Available > 0 ? "text-bg-success" : "text-bg-danger")">
+                                @book.Available
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

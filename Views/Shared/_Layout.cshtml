@@ -1,0 +1,149 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Thư Viện Số SE347</title>
+    <link rel="icon" type="image/svg+xml" href="~/images/library-logo.svg" />
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/LibraryManagement.styles.css" asp-append-version="true" />
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-xl navbar-dark lib-navbar py-2">
+            <div class="container-xxl px-3 px-xl-4">
+                <a class="navbar-brand lib-brand text-white text-decoration-none me-2" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/library-logo.svg" alt="Logo Thư viện" class="lib-brand-logo" />
+                    <div class="lh-sm text-start">
+                        <div class="lib-brand-title">Thư Viện Số SE347</div>
+                        <div class="lib-brand-subtitle">ASP.NET Core MVC</div>
+                    </div>
+                </a>
+
+                <button class="navbar-toggler border-warning" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                        aria-controls="mainNavbar" aria-expanded="false" aria-label="Mở menu điều hướng">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    @* Ghi chú cho #13 (Sĩ Duy): khi #9 (Books, Readers), #10 (BorrowRecords) và #14 (Statistics) hoàn thành,
+                       có thể trỏ asp-controller sang BooksController / ReadersController / BorrowRecordsController / StatisticsController *@
+                    <ul class="navbar-nav mx-auto mb-2 mb-xl-0 align-items-xl-center">
+                        <li class="nav-item">
+                            <a class="nav-link lib-nav-link @(currentAction == "Index" ? "active" : "")"
+                               asp-controller="Home" asp-action="Index">
+                                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z" />
+                                </svg>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link lib-nav-link @(currentAction == "Books" ? "active" : "")"
+                               asp-controller="Home" asp-action="Books">
+                                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z" />
+                                </svg>
+                                <span>Kho sách</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link lib-nav-link @(currentAction == "Categories" ? "active" : "")"
+                               asp-controller="Home" asp-action="Categories">
+                                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5z" />
+                                </svg>
+                                <span>Thể loại</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link lib-nav-link @(currentAction == "Readers" ? "active" : "")"
+                               asp-controller="Home" asp-action="Readers">
+                                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
+                                </svg>
+                                <span>Độc giả</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link lib-nav-link @(currentAction == "Borrows" ? "active" : "")"
+                               asp-controller="Home" asp-action="Borrows">
+                                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5M5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z" />
+                                    <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1" />
+                                </svg>
+                                <span>Mượn / Trả</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link lib-nav-link @(currentAction == "Overdue" ? "active" : "")"
+                               asp-controller="Home" asp-action="Overdue">
+                                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z" />
+                                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0" />
+                                </svg>
+                                <span>Quá hạn</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link lib-nav-link @(currentAction == "Statistics" ? "active" : "")"
+                               asp-controller="Home" asp-action="Statistics">
+                                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z" />
+                                </svg>
+                                <span>Thống kê</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="d-flex align-items-center ms-xl-2 mt-2 mt-xl-0">
+                        <a class="lib-nav-cta" asp-controller="Home" asp-action="Books">
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
+                            </svg>
+                            <span>Tra cứu nhanh</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container flex-grow-1 my-4">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top bg-white py-3 mt-auto text-muted small">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <img src="~/images/library-logo.svg" alt="Logo" width="22" height="22" />
+                <span>&copy; 2026 - <strong>Thư Viện Số SE347</strong></span>
+            </div>
+            <div class="d-flex gap-3">
+                <a class="text-decoration-none text-secondary" asp-controller="Home" asp-action="Books">Kho sách</a>
+                <a class="text-decoration-none text-secondary" asp-controller="Home" asp-action="Borrows">Phiếu mượn</a>
+                <a class="text-decoration-none text-secondary" asp-controller="Home" asp-action="Statistics">Thống kê</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mũi tên nhỏ bên phải để lên đầu trang bất kỳ lúc nào -->
+    <button id="backToTopBtn" type="button" class="lib-back-to-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5" />
+        </svg>
+    </button>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
