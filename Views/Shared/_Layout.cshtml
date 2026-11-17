@@ -44,8 +44,9 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(currentAction == "Books" ? "active" : "")"
-                               asp-controller="Home" asp-action="Books">
+                            <a class="nav-link lib-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Books" ? "active" : "")"
+                               asp-controller="Books" asp-action="Index">
+                                @* bug cả dashbord và kho sách đều sáng vì cả 2 đều nhận là index *@
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z" />
                                 </svg>
@@ -62,8 +63,8 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(currentAction == "Readers" ? "active" : "")"
-                               asp-controller="Home" asp-action="Readers">
+                            <a class="nav-link lib-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Readers" ? "active" : "")"
+                               asp-controller="Readers" asp-action="Index">
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
                                 </svg>
@@ -102,7 +103,7 @@
                     </ul>
 
                     <div class="d-flex align-items-center ms-xl-2 mt-2 mt-xl-0">
-                        <a class="lib-nav-cta" asp-controller="Home" asp-action="Books">
+                        <a class="lib-nav-cta" asp-controller="Books" asp-action="Index">
                             <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
                             </svg>

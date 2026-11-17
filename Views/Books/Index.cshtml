@@ -1,0 +1,99 @@
+﻿@model IEnumerable<LibraryManagement.Models.Book>
+
+@{
+    ViewData["Title"] = "Quản lý Sách";
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Quản trị hệ thống</span>
+        <h1 class="h3 fw-bold mb-1">Quản lý Sách</h1>
+        <p class="text-white-50 mb-0 small">Quản lý thông tin, thêm mới, sửa xóa và tìm kiếm sách trong thư viện.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index"><span>← Về Dashboard</span></a>
+        <a asp-action="Create" class="btn btn-primary fw-semibold">+ Thêm sách mới</a>
+    </div>
+</section>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Thanh tìm kiếm và lọc -->
+<div class="lib-panel p-3 p-md-4 mb-4">
+    <form method="get" asp-controller="Books" asp-action="Index" class="row g-3 align-items-end">
+        <div class="col-md-8">
+            <label class="form-label fw-semibold small" for="searchString">Tìm kiếm sách</label>
+            <input id="searchString" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Nhập tên sách hoặc tác giả cần tìm..." />
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-dark w-100 fw-semibold">Tìm kiếm</button>
+            <a class="btn btn-outline-secondary" asp-controller="Books" asp-action="Index" title="Xóa bộ lọc">↺</a>
+        </div>
+    </form>
+</div>
+
+<div class="lib-panel">
+    <div class="table-responsive">
+        <table class="table lib-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên sách</th>
+                    <th>Tác giả</th>
+                    <th>Thể loại</th>
+                    <th class="text-center">Năm XB</th>
+                    <th class="text-center">Còn lại</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center py-4 text-muted">Không tìm thấy đầu sách nào phù hợp.</td></tr>
+                }
+                else
+                {
+                    @foreach (var book in Model)
+                    {
+                        <tr>
+                            <td class="text-muted">#@book.Id</td>
+                            <td class="fw-semibold">@book.Title</td>
+                            <td>@book.Author</td>
+                            <td>
+                                <span class="badge rounded-pill text-bg-light border text-dark">
+                                    @(book.Category?.Name ?? "Chưa phân loại")
+                                </span>
+                            </td>
+                            <td class="text-center">@book.PublishYear</td>
+                            <td class="text-center">
+                                <span class="badge rounded-pill @(book.Available > 0 ? "text-bg-success" : "text-bg-danger")">
+                                    @book.Available
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@book.Id" class="btn btn-outline-warning text-dark">Sửa</a>
+                                    <a asp-action="Details" asp-route-id="@book.Id" class="btn btn-outline-info text-dark">Xem</a>
+                                    <a asp-action="Delete" asp-route-id="@book.Id" class="btn btn-outline-danger">Xóa</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
