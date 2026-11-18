@@ -1,4 +1,5 @@
 @{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Home";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
 }
 <!DOCTYPE html>
@@ -31,11 +32,10 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="mainNavbar">
-                    @* Ghi chú cho #13 (Sĩ Duy): khi #9 (Books, Readers), #10 (BorrowRecords) và #14 (Statistics) hoàn thành,
-                       có thể trỏ asp-controller sang BooksController / ReadersController / BorrowRecordsController / StatisticsController *@
                     <ul class="navbar-nav mx-auto mb-2 mb-xl-0 align-items-xl-center">
+                        <!-- Dashboard -->
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(currentAction == "Index" ? "active" : "")"
+                            <a class="nav-link lib-nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
                                asp-controller="Home" asp-action="Index">
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z" />
@@ -43,18 +43,21 @@
                                 <span>Dashboard</span>
                             </a>
                         </li>
+
+                        <!-- Kho sách -->
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Books" ? "active" : "")"
+                            <a class="nav-link lib-nav-link @(currentController == "Books" ? "active" : "")"
                                asp-controller="Books" asp-action="Index">
-                                @* bug cả dashbord và kho sách đều sáng vì cả 2 đều nhận là index *@
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492z" />
                                 </svg>
                                 <span>Kho sách</span>
                             </a>
                         </li>
+
+                        <!-- Thể loại -->
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(currentAction == "Categories" ? "active" : "")"
+                            <a class="nav-link lib-nav-link @(currentController == "Home" && currentAction == "Categories" ? "active" : "")"
                                asp-controller="Home" asp-action="Categories">
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5z" />
@@ -62,8 +65,10 @@
                                 <span>Thể loại</span>
                             </a>
                         </li>
+
+                        <!-- Độc giả -->
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Readers" ? "active" : "")"
+                            <a class="nav-link lib-nav-link @(currentController == "Readers" ? "active" : "")"
                                asp-controller="Readers" asp-action="Index">
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
@@ -71,8 +76,10 @@
                                 <span>Độc giả</span>
                             </a>
                         </li>
+
+                        <!-- Mượn / Trả -->
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(currentAction == "Borrows" ? "active" : "")"
+                            <a class="nav-link lib-nav-link @(currentController == "Home" && currentAction == "Borrows" ? "active" : "")"
                                asp-controller="Home" asp-action="Borrows">
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5M5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z" />
@@ -81,8 +88,10 @@
                                 <span>Mượn / Trả</span>
                             </a>
                         </li>
+
+                        <!-- Quá hạn -->
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(currentAction == "Overdue" ? "active" : "")"
+                            <a class="nav-link lib-nav-link @(currentController == "Home" && currentAction == "Overdue" ? "active" : "")"
                                asp-controller="Home" asp-action="Overdue">
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z" />
@@ -91,8 +100,10 @@
                                 <span>Quá hạn</span>
                             </a>
                         </li>
+
+                        <!-- Thống kê -->
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(currentAction == "Statistics" ? "active" : "")"
+                            <a class="nav-link lib-nav-link @(currentController == "Home" && currentAction == "Statistics" ? "active" : "")"
                                asp-controller="Home" asp-action="Statistics">
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z" />
@@ -135,7 +146,6 @@
         </div>
     </footer>
 
-    <!-- Mũi tên nhỏ bên phải để lên đầu trang bất kỳ lúc nào -->
     <button id="backToTopBtn" type="button" class="lib-back-to-top" aria-label="Lên đầu trang" title="Lên đầu trang">
         <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
             <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5" />
