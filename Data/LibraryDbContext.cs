@@ -30,6 +30,9 @@ public class LibraryDbContext : DbContext
 
         modelBuilder.Entity<Book>(entity =>
         {
+            entity.Property(b => b.Available).IsConcurrencyToken();
+            entity.Property(b => b.Quantity).IsConcurrencyToken();
+
             entity.ToTable(t =>
             {
                 t.HasCheckConstraint("CK_Books_Quantity", "[Quantity] >= 1 AND [Quantity] <= 1000");
@@ -51,6 +54,8 @@ public class LibraryDbContext : DbContext
 
         modelBuilder.Entity<BorrowRecord>(entity =>
         {
+            entity.Property(br => br.ReturnDate).IsConcurrencyToken();
+
             entity.ToTable(t =>
             {
                 t.HasCheckConstraint("CK_BorrowRecords_DueDate", "[DueDate] >= [BorrowDate]");
