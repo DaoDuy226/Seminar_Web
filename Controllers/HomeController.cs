@@ -195,9 +195,141 @@ public class HomeController : Controller
         return View(overdueRecords);
     }
 
-    public async Task<IActionResult> Statistics()
+    public async Task<IActionResult> Statistics(int? year, int? month)
     {
-        var model = await BuildSummaryAsync();
+        var today = DateTime.Today;
+        var currentYear = today.Year;
+        var selectedYear = Math.Clamp(year ?? currentYear, 2000, currentYear);
+        var selectedMonth = month is >= 1 and <= 12 ? month : null;
+        if (selectedYear == currentYear && selectedMonth.HasValue && selectedMonth.Value > today.Month)
+        {
+            selectedMonth = today.Month;
+        }
+        var periodStart = selectedMonth.HasValue
+            ? new DateTime(selectedYear, selectedMonth.Value, 1)
+            : new DateTime(selectedYear, 1, 1);
+        var isPartialCurrentPeriod = selectedYear == currentYear &&
+                                     (!selectedMonth.HasValue || selectedMonth.Value == today.Month);
+        var periodEnd = isPartialCurrentPeriod
+            ? today.AddDays(1)
+            : selectedMonth.HasValue ? periodStart.AddMonths(1) : periodStart.AddYears(1);
+        var previousPeriodStart = periodStart.AddYears(-1);
+        var previousPeriodEnd = periodEnd.AddYears(-1);
+        var previousPeriodLastDay = previousPeriodEnd.AddDays(-1);
+        var model = new StatisticsViewModel
+        {
+            Year = selectedYear,
+            Month = selectedMonth,
+            FirstAvailableYear = Math.Max(2000, currentYear - 9),
+            CurrentYear = currentYear,
+            LastSelectableMonth = selectedYear == currentYear ? today.Month : 12,
+            PeriodLabel = isPartialCurrentPeriod
+                ? selectedMonth.HasValue
+                    ? $"Tháng {selectedMonth:D2}/{selectedYear} đến {today:dd/MM/yyyy}"
+                    : $"01/01/{selectedYear} – {today:dd/MM/yyyy}"
+                : selectedMonth.HasValue ? $"Tháng {selectedMonth:D2}/{selectedYear}" : $"Năm {selectedYear}",
+            ComparisonPeriodLabel = isPartialCurrentPeriod
+                ? selectedMonth.HasValue
+                    ? $"Tháng {selectedMonth:D2}/{selectedYear - 1} đến {previousPeriodLastDay:dd/MM/yyyy}"
+                    : $"01/01/{selectedYear - 1} – {previousPeriodLastDay:dd/MM/yyyy}"
+                : selectedMonth.HasValue ? $"Tháng {selectedMonth:D2}/{selectedYear - 1}" : $"Năm {selectedYear - 1}",
+            GeneratedAt = DateTime.Now,
+            InventoryLabels = new List<string> { "Có sẵn", "Đang được mượn" },
+            Summary = await BuildSummaryAsync()
+        };
+
+        try
+        {
+            model.ReturnedBorrowCount = await _context.BorrowRecords
+                .CountAsync(record => record.ReturnDate != null);
+            model.OnTimeBorrowCount = await _context.BorrowRecords
+                .CountAsync(record => record.ReturnDate == null && record.DueDate >= DateTime.Today);
+
+            var bucketCount = selectedMonth.HasValue
+                ? DateTime.DaysInMonth(selectedYear, selectedMonth.Value)
+                : 12;
+            model.ActivityLabels = Enumerable.Range(1, bucketCount)
+                .Select(value => selectedMonth.HasValue ? value.ToString("00") : $"Tháng {value}")
+                .ToList();
+
+            var borrowCounts = await _context.BorrowRecords
+                .Where(record => record.BorrowDate >= periodStart && record.BorrowDate < periodEnd)
+                .GroupBy(record => selectedMonth.HasValue ? record.BorrowDate.Day : record.BorrowDate.Month)
+                .Select(group => new { Bucket = group.Key, Count = group.Count() })
+                .ToListAsync();
+
+            var returnCounts = await _context.BorrowRecords
+                .Where(record => record.ReturnDate.HasValue &&
+                                 record.ReturnDate.Value >= periodStart &&
+                                 record.ReturnDate.Value < periodEnd)
+                .GroupBy(record => selectedMonth.HasValue ? record.ReturnDate!.Value.Day : record.ReturnDate!.Value.Month)
+                .Select(group => new { Bucket = group.Key, Count = group.Count() })
+                .ToListAsync();
+
+            var overdueCounts = await _context.BorrowRecords
+                .Where(record => record.ReturnDate == null &&
+                                 record.DueDate < DateTime.Today &&
+                                 record.DueDate >= periodStart &&
+                                 record.DueDate < periodEnd)
+                .GroupBy(record => selectedMonth.HasValue ? record.DueDate.Day : record.DueDate.Month)
+                .Select(group => new { Bucket = group.Key, Count = group.Count() })
+                .ToListAsync();
+
+            model.MonthlyBorrowCounts = Enumerable.Range(1, bucketCount)
+                .Select(bucket => borrowCounts.FirstOrDefault(item => item.Bucket == bucket)?.Count ?? 0)
+                .ToList();
+            model.MonthlyReturnCounts = Enumerable.Range(1, bucketCount)
+                .Select(bucket => returnCounts.FirstOrDefault(item => item.Bucket == bucket)?.Count ?? 0)
+                .ToList();
+            model.MonthlyOverdueCounts = Enumerable.Range(1, bucketCount)
+                .Select(bucket => overdueCounts.FirstOrDefault(item => item.Bucket == bucket)?.Count ?? 0)
+                .ToList();
+
+            model.PeriodBorrowCount = model.MonthlyBorrowCounts.Sum();
+            model.PreviousPeriodBorrowCount = await _context.BorrowRecords
+                .CountAsync(record => record.BorrowDate >= previousPeriodStart && record.BorrowDate < previousPeriodEnd);
+            model.PeriodReturnCount = model.MonthlyReturnCounts.Sum();
+            model.PreviousPeriodReturnCount = await _context.BorrowRecords
+                .CountAsync(record => record.ReturnDate.HasValue &&
+                                      record.ReturnDate.Value >= previousPeriodStart &&
+                                      record.ReturnDate.Value < previousPeriodEnd);
+            model.PeriodOverdueCount = model.MonthlyOverdueCounts.Sum();
+            model.PreviousPeriodOverdueCount = await _context.BorrowRecords
+                .CountAsync(record => record.ReturnDate == null &&
+                                      record.DueDate < DateTime.Today &&
+                                      record.DueDate >= previousPeriodStart &&
+                                      record.DueDate < previousPeriodEnd);
+
+            model.PopularBooks = await _context.BorrowDetails
+                .Where(detail => detail.BorrowRecord!.BorrowDate >= periodStart &&
+                                 detail.BorrowRecord.BorrowDate < periodEnd)
+                .GroupBy(detail => new { detail.BookId, detail.Book!.Title, detail.Book.Author })
+                .Select(group => new PopularBookStatisticsItem
+                {
+                    BookId = group.Key.BookId,
+                    Title = group.Key.Title,
+                    Author = group.Key.Author,
+                    CopiesBorrowed = group.Sum(detail => detail.Quantity),
+                    BorrowSlipCount = group.Select(detail => detail.BorrowRecordId).Distinct().Count()
+                })
+                .OrderByDescending(book => book.CopiesBorrowed)
+                .ThenBy(book => book.Title)
+                .Take(5)
+                .AsNoTracking()
+                .ToListAsync();
+
+            model.InventoryCounts = new List<int>
+            {
+                model.Summary.AvailableBooks,
+                Math.Max(0, model.Summary.TotalBooks - model.Summary.AvailableBooks)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Không thể tải số liệu trang thống kê từ SQL Server.");
+            ViewBag.DatabaseError ??= "Chưa kết nối được tới cơ sở dữ liệu. Vui lòng kiểm tra SQL Server và chuỗi kết nối trong README.md.";
+        }
+
         return View(model);
     }
 
