@@ -1,0 +1,8 @@
+@* Partial View dùng chung: hiển thị thông báo khi không kết nối được CSDL.
+   Partial tự đọc được ViewBag/ViewData của View cha, nên không cần truyền model. *@
+@if (ViewBag.DatabaseError != null)
+{
+    <div class="alert alert-danger border-2 shadow-sm mb-4" role="alert">
+        <strong>Lỗi kết nối CSDL:</strong> @ViewBag.DatabaseError
+    </div>
+}
