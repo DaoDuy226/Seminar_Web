@@ -14,7 +14,7 @@
 | Khối code | `@{ ViewData["Title"] = "Kho sách"; }` |
 | Comment | `@* không xuất hiện trong HTML gửi về trình duyệt *@` |
 
-File: `Views/Home/Books.cshtml`
+File: `Views/Books/Index.cshtml`
 
 ## 2. Layout
 **Ý chính:** Layout là khung chung của mọi trang (navbar, footer, CSS/JS). Mỗi View chỉ chứa phần nội dung riêng.
@@ -50,9 +50,9 @@ Cách gọi trong View: `<partial name="_DatabaseErrorAlert" />`
 
 | Tag Helper | Ví dụ trong demo | HTML sinh ra |
 |---|---|---|
-| Anchor | `<a asp-controller="Home" asp-action="Books">` | `<a href="/Home/Books">` |
-| Route value | `asp-route-categoryId="@book.CategoryId"` | `href="/Home/Books?categoryId=3"` |
-| Form | `<form method="get" asp-controller="Home" asp-action="Books">` | `<form action="/Home/Books">` |
+| Anchor | `<a asp-controller="Books" asp-action="Index">` | `<a href="/Books">` |
+| Route value | `asp-route-categoryId="@book.CategoryId"` | `href="/Books?categoryId=3"` |
+| Form | `<form method="get" asp-controller="Books" asp-action="Index">` | `<form action="/Books">` |
 | Cache busting | `<link href="~/css/site.css" asp-append-version="true">` | `site.css?v=abc123` |
 | Partial | `<partial name="_DatabaseErrorAlert" />` | (nội dung partial) |
 

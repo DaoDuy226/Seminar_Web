@@ -54,7 +54,7 @@
                             <td>
                                 @foreach (var d in br.BorrowDetails)
                                 {
-                                    <div>@d.Book?.Title <span class="text-muted small">(x@d.Quantity)</span></div>
+                                    <div>@d.Book?.Title <span class="text-muted small">(x@(d.Quantity))</span></div>
                                 }
                             </td>
                             <td>@br.BorrowDate.ToString("dd/MM/yyyy")</td>

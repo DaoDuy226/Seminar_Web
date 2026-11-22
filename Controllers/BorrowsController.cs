@@ -79,7 +79,7 @@ public class BorrowsController(LibraryDbContext context, ILogger<BorrowsControll
             context.BorrowRecords.Add(record);
             await context.SaveChangesAsync(cancellationToken);
 
-            TempData["BorrowSuccess"] = $"Đã lập phiếu mượn #{record.Id}.";
+            TempData["SuccessMessage"] = $"Đã lập phiếu mượn #{record.Id}.";
             return RedirectToAction(nameof(HomeController.Borrows), "Home");
         }
         catch (DbUpdateConcurrencyException)
@@ -113,7 +113,7 @@ public class BorrowsController(LibraryDbContext context, ILogger<BorrowsControll
 
             if (record.ReturnDate.HasValue)
             {
-                TempData["BorrowError"] = $"Phiếu #{id} đã được trả.";
+                TempData["ErrorMessage"] = $"Phiếu #{id} đã được trả.";
                 return RedirectToAction(nameof(HomeController.Borrows), "Home");
             }
 
@@ -122,7 +122,7 @@ public class BorrowsController(LibraryDbContext context, ILogger<BorrowsControll
                 record.BorrowDetails.Any(detail => detail.Book is null ||
                     detail.Book.Available + detail.Quantity > detail.Book.Quantity))
             {
-                TempData["BorrowError"] = $"Không thể trả phiếu #{id}. Vui lòng kiểm tra ngày mượn, chi tiết phiếu và tồn kho.";
+                TempData["ErrorMessage"] = $"Không thể trả phiếu #{id}. Vui lòng kiểm tra ngày mượn, chi tiết phiếu và tồn kho.";
                 return RedirectToAction(nameof(HomeController.Borrows), "Home");
             }
 
@@ -134,16 +134,16 @@ public class BorrowsController(LibraryDbContext context, ILogger<BorrowsControll
             record.ReturnDate = today;
             record.Status = BorrowStatuses.Returned;
             await context.SaveChangesAsync(cancellationToken);
-            TempData["BorrowSuccess"] = $"Đã xác nhận trả phiếu #{id}.";
+            TempData["SuccessMessage"] = $"Đã xác nhận trả phiếu #{id}.";
         }
         catch (DbUpdateConcurrencyException)
         {
-            TempData["BorrowError"] = "Phiếu hoặc tồn kho vừa thay đổi. Vui lòng kiểm tra lại trạng thái.";
+            TempData["ErrorMessage"] = "Phiếu hoặc tồn kho vừa thay đổi. Vui lòng kiểm tra lại trạng thái.";
         }
         catch (Exception ex) when (ex is DbUpdateException or System.Data.Common.DbException)
         {
             logger.LogError(ex, "Không thể xác nhận trả phiếu {BorrowId}.", id);
-            TempData["BorrowError"] = "Không thể xác nhận trả sách. Vui lòng thử lại.";
+            TempData["ErrorMessage"] = "Không thể xác nhận trả sách. Vui lòng thử lại.";
         }
 
         return RedirectToAction(nameof(HomeController.Borrows), "Home");

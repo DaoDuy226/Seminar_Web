@@ -42,62 +42,6 @@ public class HomeController : Controller
         return View(model);
     }
 
-    public async Task<IActionResult> Books(string? search, int? categoryId, string availability = "all")
-    {
-        var vm = new BooksCatalogViewModel
-        {
-            SearchTerm = search?.Trim(),
-            SelectedCategoryId = categoryId,
-            AvailabilityFilter = availability
-        };
-
-        try
-        {
-            vm.Categories = await _context.Categories
-                .Include(c => c.Books)
-                .OrderBy(c => c.Id)
-                .AsNoTracking()
-                .ToListAsync();
-
-            var query = _context.Books
-                .Include(b => b.Category)
-                .AsNoTracking()
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(vm.SearchTerm))
-            {
-                var term = vm.SearchTerm;
-                query = query.Where(b =>
-                    b.Title.Contains(term) ||
-                    b.Author.Contains(term) ||
-                    (b.Category != null && b.Category.Name.Contains(term)));
-            }
-
-            if (categoryId.HasValue && categoryId.Value > 0)
-            {
-                query = query.Where(b => b.CategoryId == categoryId.Value);
-            }
-
-            if (availability == "available")
-            {
-                query = query.Where(b => b.Available > 0);
-            }
-            else if (availability == "borrowed")
-            {
-                query = query.Where(b => b.Available < b.Quantity);
-            }
-
-            vm.Books = await query.OrderBy(b => b.Id).ToListAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Không thể tải danh mục sách.");
-            ViewBag.DatabaseError = "Chưa kết nối được tới cơ sở dữ liệu.";
-        }
-
-        return View(vm);
-    }
-
     public async Task<IActionResult> Categories()
     {
         var categories = new List<Category>();
@@ -116,35 +60,6 @@ public class HomeController : Controller
         }
 
         return View(categories);
-    }
-
-    public async Task<IActionResult> Readers()
-    {
-        var readerSummaries = new List<ReaderSummaryItem>();
-
-        try
-        {
-            var readers = await _context.Readers
-                .Include(r => r.BorrowRecords)
-                .OrderBy(r => r.Id)
-                .AsNoTracking()
-                .ToListAsync();
-
-            readerSummaries = readers.Select(r => new ReaderSummaryItem
-            {
-                Reader = r,
-                TotalBorrowCount = r.BorrowRecords.Count,
-                ActiveBorrowCount = r.BorrowRecords.Count(br => br.ReturnDate == null),
-                OverdueBorrowCount = r.BorrowRecords.Count(br => br.IsOverdue)
-            }).ToList();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Không thể tải danh sách độc giả.");
-            ViewBag.DatabaseError = "Chưa kết nối được tới cơ sở dữ liệu.";
-        }
-
-        return View(readerSummaries);
     }
 
     public async Task<IActionResult> Borrows()
