@@ -54,12 +54,12 @@
 <partial name="_DatabaseErrorAlert" />
 
 <div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3"><a class="lib-card-link" asp-controller="Home" asp-action="Books"><div class="lib-interactive-card theme-navy p-3 h-100">
+    <div class="col-6 col-lg-3"><a class="lib-card-link" asp-controller="Books" asp-action="Index"><div class="lib-interactive-card theme-navy p-3 h-100">
         <div class="text-muted small">Bản sách · toàn kho</div><div class="fs-2 fw-bold">@Model.Summary.TotalBooks</div>
         <div class="small text-secondary">@Model.Summary.TotalBookTitles đầu sách</div>
         <div class="small text-primary mt-2">Mở kho sách →</div>
     </div></a></div>
-    <div class="col-6 col-lg-3"><a class="lib-card-link" asp-controller="Home" asp-action="Readers"><div class="lib-interactive-card theme-info p-3 h-100">
+    <div class="col-6 col-lg-3"><a class="lib-card-link" asp-controller="Readers" asp-action="Index"><div class="lib-interactive-card theme-info p-3 h-100">
         <div class="text-muted small">Độc giả · toàn hệ thống</div><div class="fs-2 fw-bold text-info">@Model.Summary.TotalReaders</div>
         <div class="small text-secondary">Đã đăng ký</div>
         <div class="small text-primary mt-2">Mở danh sách độc giả →</div>

@@ -79,7 +79,7 @@
 
                         <!-- Mượn / Trả -->
                         <li class="nav-item">
-                            <a class="nav-link lib-nav-link @(currentController == "Home" && currentAction == "Borrows" ? "active" : "")"
+                            <a class="nav-link lib-nav-link @((currentController == "Home" && currentAction == "Borrows") || currentController == "Borrows" ? "active" : "")"
                                asp-controller="Home" asp-action="Borrows">
                                 <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5M5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z" />
@@ -139,7 +139,7 @@
                 <span>&copy; 2026 - <strong>Thư Viện Số SE347</strong></span>
             </div>
             <div class="d-flex gap-3">
-                <a class="text-decoration-none text-secondary" asp-controller="Home" asp-action="Books">Kho sách</a>
+                <a class="text-decoration-none text-secondary" asp-controller="Books" asp-action="Index">Kho sách</a>
                 <a class="text-decoration-none text-secondary" asp-controller="Home" asp-action="Borrows">Phiếu mượn</a>
                 <a class="text-decoration-none text-secondary" asp-controller="Home" asp-action="Statistics">Thống kê</a>
             </div>
