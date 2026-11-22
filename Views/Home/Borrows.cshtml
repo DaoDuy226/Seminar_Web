@@ -14,10 +14,7 @@
     </a>
 </section>
 
-@if (ViewBag.DatabaseError != null)
-{
-    <div class="alert alert-danger">@ViewBag.DatabaseError</div>
-}
+<partial name="_DatabaseErrorAlert" />
 
 <div class="lib-panel">
     <div class="table-responsive">

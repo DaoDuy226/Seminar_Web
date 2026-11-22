@@ -3,12 +3,7 @@
     ViewData["Title"] = "Dashboard";
 }
 
-@if (ViewBag.DatabaseError != null)
-{
-    <div class="alert alert-danger border-2 shadow-sm mb-4" role="alert">
-        <strong>Lỗi kết nối CSDL:</strong> @ViewBag.DatabaseError
-    </div>
-}
+<partial name="_DatabaseErrorAlert" />
 
 <!-- Hero Banner -->
 <section class="lib-hero p-4 p-lg-5 mb-4">
