@@ -1,66 +1,291 @@
-@model DashboardViewModel
+@model StatisticsViewModel
+@using System.Text.Json
 @{
     ViewData["Title"] = "Thống kê Thư viện";
+    var activityLabels = JsonSerializer.Serialize(Model.ActivityLabels);
+    var monthlyBorrowCounts = JsonSerializer.Serialize(Model.MonthlyBorrowCounts);
+    var monthlyReturnCounts = JsonSerializer.Serialize(Model.MonthlyReturnCounts);
+    var monthlyOverdueCounts = JsonSerializer.Serialize(Model.MonthlyOverdueCounts);
+    var popularBookLabels = JsonSerializer.Serialize(Model.PopularBooks.Select(book => book.Title));
+    var popularBookCopies = JsonSerializer.Serialize(Model.PopularBooks.Select(book => book.CopiesBorrowed));
+    var popularBookSlipCounts = JsonSerializer.Serialize(Model.PopularBooks.Select(book => book.BorrowSlipCount));
+    var booksPageUrl = JsonSerializer.Serialize(Url.Action("Books", "Home"));
+    var inventoryLabels = JsonSerializer.Serialize(Model.InventoryLabels);
+    var inventoryCounts = JsonSerializer.Serialize(Model.InventoryCounts);
+    var circulationLabels = JsonSerializer.Serialize(new[] { "Đang trong hạn", "Quá hạn", "Đã trả" });
+    var circulationCounts = JsonSerializer.Serialize(new[] { Model.OnTimeBorrowCount, Model.Summary.OverdueBorrowCount, Model.ReturnedBorrowCount });
+    var yearlyComparisons = new[]
+    {
+        (Label: "Lượt mượn", Current: Model.PeriodBorrowCount, Previous: Model.PreviousPeriodBorrowCount, Theme: "theme-navy"),
+        (Label: "Lượt trả", Current: Model.PeriodReturnCount, Previous: Model.PreviousPeriodReturnCount, Theme: "theme-teal"),
+        (Label: "Phiếu quá hạn", Current: Model.PeriodOverdueCount, Previous: Model.PreviousPeriodOverdueCount, Theme: "theme-danger")
+    };
 }
+
+<style>
+    @@media print {
+        @@page { margin: 14mm; }
+        .sticky-top, footer, #backToTopBtn, .no-print { display: none !important; }
+        body { background: #fff !important; color: #111 !important; }
+        .container { width: 100% !important; max-width: none !important; margin: 0 !important; }
+        .lib-page-header { background: #fff !important; color: #111 !important; padding: 0 0 1rem !important; }
+        .lib-page-header .text-white-50 { color: #444 !important; }
+        .lib-panel, .lib-interactive-card { box-shadow: none !important; transform: none !important; break-inside: avoid; border: 1px solid #ddd !important; }
+        a { color: inherit !important; text-decoration: none !important; }
+    }
+</style>
 
 <section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
     <div>
         <span class="badge text-bg-warning text-dark mb-2">Phân tích số liệu</span>
-        <h1 class="h3 fw-bold mb-1">Thống kê Kho sách &amp; Lượt mượn</h1>
-        <p class="text-white-50 mb-0 small">Tổng hợp trực tiếp từ SQL Server bằng truy vấn LINQ trên EF Core.</p>
+        <h1 class="h3 fw-bold mb-1">Thống kê thư viện</h1>
+        <p class="text-white-50 mb-0 small">Số liệu được tổng hợp trực tiếp từ SQL Server bằng Entity Framework Core.</p>
+        @if (ViewBag.DatabaseError == null)
+        {
+            <div class="small text-white-50 mt-2">Cập nhật lúc @Model.GeneratedAt.ToString("HH:mm · dd/MM/yyyy")</div>
+        }
     </div>
-    <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index">
-        <span>← Về Dashboard</span>
-    </a>
+    <div class="d-flex flex-wrap gap-2 no-print">
+        <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index">← Về Dashboard</a>
+        <button class="btn-lib btn-lib-ghost" type="button" onclick="window.print()">In / Lưu PDF</button>
+    </div>
 </section>
 
 <partial name="_DatabaseErrorAlert" />
 
 <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="lib-interactive-card theme-navy p-3">
-            <div class="text-muted small">Tổng bản sách</div>
-            <div class="fs-2 fw-bold" style="color: #1E3A5F;">@Model.TotalBooks</div>
-            <div class="small text-secondary">@Model.TotalBookTitles đầu sách</div>
+    <div class="col-6 col-lg-3"><a class="lib-card-link" asp-controller="Home" asp-action="Books"><div class="lib-interactive-card theme-navy p-3 h-100">
+        <div class="text-muted small">Bản sách · toàn kho</div><div class="fs-2 fw-bold">@Model.Summary.TotalBooks</div>
+        <div class="small text-secondary">@Model.Summary.TotalBookTitles đầu sách</div>
+        <div class="small text-primary mt-2">Mở kho sách →</div>
+    </div></a></div>
+    <div class="col-6 col-lg-3"><a class="lib-card-link" asp-controller="Home" asp-action="Readers"><div class="lib-interactive-card theme-info p-3 h-100">
+        <div class="text-muted small">Độc giả · toàn hệ thống</div><div class="fs-2 fw-bold text-info">@Model.Summary.TotalReaders</div>
+        <div class="small text-secondary">Đã đăng ký</div>
+        <div class="small text-primary mt-2">Mở danh sách độc giả →</div>
+    </div></a></div>
+    <div class="col-6 col-lg-3"><a class="lib-card-link" asp-controller="Home" asp-action="Borrows"><div class="lib-interactive-card theme-amber p-3 h-100">
+        <div class="text-muted small">Phiếu chưa trả · toàn hệ thống</div><div class="fs-2 fw-bold text-warning">@Model.Summary.ActiveBorrowCount</div>
+        <div class="small text-secondary">@Model.OnTimeBorrowCount trong hạn · @Model.Summary.OverdueBorrowCount quá hạn</div>
+        <div class="small text-primary mt-2">Mở phiếu mượn →</div>
+    </div></a></div>
+    <div class="col-6 col-lg-3"><a class="lib-card-link" asp-controller="Home" asp-action="Borrows"><div class="lib-interactive-card theme-teal p-3 h-100">
+        <div class="text-muted small">Phiếu đã trả · toàn hệ thống</div><div class="fs-2 fw-bold text-success">@Model.ReturnedBorrowCount</div>
+        <div class="small text-secondary">Ngày trả thực tế đã ghi nhận</div>
+        <div class="small text-primary mt-2">Mở lịch sử mượn trả →</div>
+    </div></a></div>
+</div>
+
+<section class="lib-panel p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="h5 fw-bold mb-1">Hoạt động · @Model.PeriodLabel</h2>
+            <p class="text-muted small mb-0">Đối chiếu cùng kỳ @Model.ComparisonPeriodLabel; số liệu lấy trực tiếp từ lịch sử mượn trả.</p>
         </div>
+        <span class="badge text-bg-light border">Không có dữ liệu kỳ trước sẽ không tính phần trăm</span>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="lib-interactive-card theme-teal p-3">
-            <div class="text-muted small">Còn sẵn trong kho</div>
-            <div class="fs-2 fw-bold text-success">@Model.AvailableBooks</div>
-            <div class="small text-secondary">
-                Tỷ lệ sẵn sàng @(Model.TotalBooks > 0 ? Math.Round(100.0 * Model.AvailableBooks / Model.TotalBooks, 1) : 0)%
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="lib-interactive-card theme-amber p-3">
-            <div class="text-muted small">Đang cho mượn</div>
-            <div class="fs-2 fw-bold text-warning">@(Model.TotalBooks - Model.AvailableBooks)</div>
-            <div class="small text-secondary">@Model.ActiveBorrowCount phiếu chưa trả</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <a class="lib-card-link" asp-controller="Home" asp-action="Overdue">
-            <div class="lib-interactive-card theme-danger p-3">
-                <div class="d-flex justify-content-between">
-                    <span class="text-muted small">Phiếu quá hạn</span>
-                    <span class="lib-card-arrow fw-bold text-muted">→</span>
+    <div class="row g-3">
+        @foreach (var metric in yearlyComparisons)
+        {
+            var difference = metric.Current - metric.Previous;
+            <div class="col-md-4">
+                <div class="lib-interactive-card @metric.Theme p-3 h-100">
+                    <div class="text-muted small">@metric.Label · @Model.Year</div>
+                    <div class="fs-2 fw-bold">@metric.Current</div>
+                    <div class="small text-secondary">@Model.ComparisonPeriodLabel: @metric.Previous</div>
+                    @if (metric.Previous == 0)
+                    {
+                        <div class="small text-muted mt-1">Không có dữ liệu kỳ trước để so sánh biến động.</div>
+                    }
+                    else
+                    {
+                        <div class="small mt-1 @(difference > 0 ? "text-success" : difference < 0 ? "text-danger" : "text-muted")">
+                            @(difference > 0 ? "+" : "")@difference phiếu so với kỳ trước
+                        </div>
+                    }
                 </div>
-                <div class="fs-2 fw-bold text-danger">@Model.OverdueBorrowCount</div>
-                <div class="small text-secondary">Nhấn để xem chi tiết</div>
             </div>
-        </a>
+        }
+    </div>
+</section>
+
+<section class="lib-panel p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div>
+            <h2 class="h5 fw-bold mb-1">Lượt mượn, trả và quá hạn @(Model.Month.HasValue ? "theo ngày" : "theo tháng")</h2>
+            <p class="text-muted small mb-0">Mượn theo ngày mượn, trả theo ngày trả thực tế, quá hạn theo ngày đến hạn trả.</p>
+        </div>
+        <form asp-controller="Home" asp-action="Statistics" method="get" class="d-flex flex-wrap align-items-center gap-2 no-print">
+            <label for="year" class="form-label mb-0">Năm</label>
+            <select id="year" name="year" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Lọc thống kê theo năm">
+                @for (var year = Model.CurrentYear; year >= Model.FirstAvailableYear; year--)
+                {
+                    <option value="@year" selected="@(year == Model.Year)">@year</option>
+                }
+            </select>
+            <label for="month" class="form-label mb-0">Tháng</label>
+            <select id="month" name="month" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Lọc thống kê theo tháng">
+                <option value="" selected="@(!Model.Month.HasValue)">Cả năm</option>
+                @for (var month = 1; month <= Model.LastSelectableMonth; month++)
+                {
+                    <option value="@month" selected="@(month == Model.Month)">Tháng @month.ToString("00")</option>
+                }
+            </select>
+            <noscript><button class="btn btn-sm btn-primary" type="submit">Lọc</button></noscript>
+        </form>
+    </div>
+    <div style="height: 320px; position: relative;">
+        <canvas id="monthlyChart" role="img" aria-label="Biểu đồ lượt mượn, trả và quá hạn trong @Model.PeriodLabel"></canvas>
+        <p id="monthlyChartEmpty" class="text-muted text-center position-absolute top-50 start-50 translate-middle d-none">Chưa có hoạt động trong @Model.PeriodLabel.</p>
+    </div>
+</section>
+
+<section class="lib-panel p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="h5 fw-bold mb-1">Sách được mượn nhiều · @Model.PeriodLabel</h2>
+            <p class="text-muted small mb-0">Xếp theo tổng số bản mượn; di chuột để xem số phiếu, nhấn cột để mở sách.</p>
+        </div>
+        <a class="btn-lib btn-lib-outline" asp-controller="Home" asp-action="Borrows">Xem lịch sử mượn</a>
+    </div>
+    <div style="height: @(Math.Max(220, Model.PopularBooks.Count * 58))px; position: relative;">
+        <canvas id="popularBooksChart" role="img" aria-label="Biểu đồ cột ngang các sách được mượn nhiều nhất trong @Model.PeriodLabel"></canvas>
+        <p id="popularBooksChartEmpty" class="text-muted text-center position-absolute top-50 start-50 translate-middle d-none">Không có lượt mượn trong kỳ này.</p>
+    </div>
+    <ol class="visually-hidden" aria-label="Danh sách sách xếp hạng theo số bản mượn">
+        @foreach (var book in Model.PopularBooks)
+        {
+            <li>@book.Title: @book.CopiesBorrowed bản trong @book.BorrowSlipCount phiếu.</li>
+        }
+    </ol>
+</section>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <section class="lib-panel p-4 h-100">
+            <h2 class="h5 fw-bold mb-1">Tình trạng bản sách</h2>
+            <p class="text-muted small">Tồn kho hiện tại · không phụ thuộc bộ lọc thời gian.</p>
+            <div style="height: 280px; position: relative;">
+                <canvas id="inventoryChart" role="img" aria-label="Tình trạng số bản sách trong kho"></canvas>
+                <p id="inventoryChartEmpty" class="text-muted text-center position-absolute top-50 start-50 translate-middle d-none">Chưa có dữ liệu sách.</p>
+            </div>
+            <div class="small text-muted text-center">@Model.Summary.AvailableBooks bản còn sẵn / @Model.Summary.TotalBooks tổng bản</div>
+        </section>
+    </div>
+    <div class="col-lg-6">
+        <section class="lib-panel p-4 h-100">
+            <h2 class="h5 fw-bold mb-1">Tình trạng phiếu mượn</h2>
+            <p class="text-muted small">Trạng thái hiện tại trên toàn bộ phiếu mượn.</p>
+            <div style="height: 280px; position: relative;">
+                <canvas id="circulationChart" role="img" aria-label="Tình trạng phiếu mượn"></canvas>
+                <p id="circulationChartEmpty" class="text-muted text-center position-absolute top-50 start-50 translate-middle d-none">Chưa có phiếu mượn.</p>
+            </div>
+        </section>
     </div>
 </div>
 
-<div class="lib-panel p-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-        <h2 class="h5 fw-bold mb-0">Khu vực biểu đồ thống kê (#14)</h2>
-        <span class="badge text-bg-light border">Sẵn sàng tích hợp Chart.js</span>
-    </div>
-    <p class="text-muted mb-0">
-        Khung số liệu tổng quan đã nối dữ liệu thực từ SQL Server (@Model.TotalCategories thể loại, @Model.TotalReaders độc giả).
-        Phần biểu đồ Chart.js và lọc lịch sử theo khoảng ngày sẽ được gắn vào đây ở task #14.
-    </p>
-</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        const activityLabels = @Html.Raw(activityLabels);
+        const monthlyBorrowCounts = @Html.Raw(monthlyBorrowCounts);
+        const monthlyReturnCounts = @Html.Raw(monthlyReturnCounts);
+        const monthlyOverdueCounts = @Html.Raw(monthlyOverdueCounts);
+        const popularBookLabels = @Html.Raw(popularBookLabels);
+        const popularBookCopies = @Html.Raw(popularBookCopies);
+        const popularBookSlipCounts = @Html.Raw(popularBookSlipCounts);
+        const booksPageUrl = @Html.Raw(booksPageUrl);
+        const inventoryLabels = @Html.Raw(inventoryLabels);
+        const inventoryCounts = @Html.Raw(inventoryCounts);
+        const circulationLabels = @Html.Raw(circulationLabels);
+        const circulationCounts = @Html.Raw(circulationCounts);
+        const vietnameseNumber = new Intl.NumberFormat('vi-VN');
+
+        const monthlyHasData = monthlyBorrowCounts.some(value => value > 0) ||
+            monthlyReturnCounts.some(value => value > 0) ||
+            monthlyOverdueCounts.some(value => value > 0);
+        document.getElementById('monthlyChartEmpty').classList.toggle('d-none', monthlyHasData);
+        new Chart(document.getElementById('monthlyChart'), {
+            type: 'bar',
+            data: { labels: activityLabels, datasets: [
+                { label: 'Lượt mượn', data: monthlyBorrowCounts, backgroundColor: '#1E3A5F' },
+                { label: 'Lượt trả', data: monthlyReturnCounts, backgroundColor: '#0F766E' },
+                { label: 'Phiếu quá hạn (theo hạn trả)', data: monthlyOverdueCounts, backgroundColor: '#B91C1C' }
+            ] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { tooltip: { callbacks: { label: context => `${context.dataset.label}: ${vietnameseNumber.format(context.parsed.y)} phiếu` } } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+
+        const popularBooksHasData = popularBookCopies.some(value => value > 0);
+        document.getElementById('popularBooksChartEmpty').classList.toggle('d-none', popularBooksHasData);
+        new Chart(document.getElementById('popularBooksChart'), {
+            type: 'bar',
+            data: {
+                labels: popularBookLabels,
+                datasets: [{
+                    label: 'Bản đã mượn',
+                    data: popularBookCopies,
+                    backgroundColor: ['#D97706', '#1E3A5F', '#0F766E', '#3B82F6', '#64748B'],
+                    borderRadius: 6,
+                    maxBarThickness: 34
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        window.location.href = `${booksPageUrl}?search=${encodeURIComponent(popularBookLabels[index])}`;
+                    }
+                },
+                onHover: (event, elements) => {
+                    if (event.native?.target) {
+                        event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: {
+                        label: context => `${vietnameseNumber.format(context.parsed.x)} bản đã mượn`,
+                        afterLabel: context => `${vietnameseNumber.format(popularBookSlipCounts[context.dataIndex])} phiếu`
+                    } }
+                },
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0 } },
+                    y: { reverse: false, grid: { display: false } }
+                }
+            }
+        });
+
+        const inventoryHasData = inventoryCounts.some(value => value > 0);
+        document.getElementById('inventoryChartEmpty').classList.toggle('d-none', inventoryHasData);
+        new Chart(document.getElementById('inventoryChart'), {
+            type: 'doughnut',
+            data: { labels: inventoryLabels, datasets: [{ data: inventoryCounts, backgroundColor: ['#0F766E', '#D97706'] }] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { tooltip: { callbacks: { label: context => `${context.label}: ${vietnameseNumber.format(context.raw)} bản` } } }
+            }
+        });
+
+        const circulationHasData = circulationCounts.some(value => value > 0);
+        document.getElementById('circulationChartEmpty').classList.toggle('d-none', circulationHasData);
+        new Chart(document.getElementById('circulationChart'), {
+            type: 'doughnut',
+            data: { labels: circulationLabels, datasets: [{ data: circulationCounts, backgroundColor: ['#0F766E', '#B91C1C', '#1E3A5F'] }] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { tooltip: { callbacks: { label: context => `${context.label}: ${vietnameseNumber.format(context.raw)} phiếu` } } }
+            }
+        });
+    </script>
+}
