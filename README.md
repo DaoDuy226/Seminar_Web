@@ -18,12 +18,16 @@ Khung project nền tảng (Task **#8**) cho bài seminar **SE347 · ASP.NET Cor
 ```text
 demoaspnetcoremvc/
 ├── Controllers/
-│   └── HomeController.cs                 # Dashboard tổng quan & các trang xem nhanh dữ liệu mẫu
+│   ├── HomeController.cs                 # Dashboard, Thể loại, danh sách phiếu, Quá hạn, Thống kê
+│   ├── BooksController.cs                # CRUD Sách + tìm kiếm, lọc theo thể loại/tình trạng kho
+│   ├── ReadersController.cs              # CRUD Độc giả + lịch sử mượn
+│   └── BorrowsController.cs              # Lập phiếu mượn, xác nhận trả
 ├── Data/
 │   ├── LibraryDbContext.cs               # DbContext cấu hình quan hệ, Check Constraint, Index & DeleteBehavior
 │   └── SeedData.cs                       # Dữ liệu mẫu (5 thể loại, 20 sách, 10 độc giả, 7 phiếu mượn)
 ├── docs/
-│   └── P3-Model-va-EF-Core.md            # Tài liệu lý thuyết P3 kèm ví dụ trích từ demo
+│   ├── P4-View-va-Razor.md               # Ghi chú lý thuyết P4 (bản markdown)
+│   └── ly-thuyet/                        # Tài liệu lý thuyết P1–P6 (.docx) + file tổng hợp
 ├── Migrations/                           # EF Core Migrations (InitialCreate)
 ├── Models/
 │   ├── BorrowStatuses.cs                 # Hằng số trạng thái ("Đang mượn", "Đã trả", "Quá hạn")
