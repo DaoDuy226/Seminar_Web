@@ -1,72 +1,27 @@
-@model LibraryManagement.Models.Book
-
+@model Book
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Thêm sách mới";
 }
 
-<h1>Create</h1>
-
-<h4>Book</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Author" class="control-label"></label>
-                <input asp-for="Author" class="form-control" />
-                <span asp-validation-for="Author" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="CategoryId" class="control-label"></label>
-                <input asp-for="CategoryId" class="form-control" />
-                <span asp-validation-for="CategoryId" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Category" class="control-label"></label>
-                <input asp-for="Category" class="form-control" />
-                <span asp-validation-for="Category" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Quantity" class="control-label"></label>
-                <input asp-for="Quantity" class="form-control" />
-                <span asp-validation-for="Quantity" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Available" class="control-label"></label>
-                <input asp-for="Available" class="form-control" />
-                <span asp-validation-for="Available" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="PublishYear" class="control-label"></label>
-                <input asp-for="PublishYear" class="form-control" />
-                <span asp-validation-for="PublishYear" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="BorrowDetails" class="control-label"></label>
-                <input asp-for="BorrowDetails" class="form-control" />
-                <span asp-validation-for="BorrowDetails" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Kho sách</span>
+        <h1 class="h3 fw-bold mb-1">Thêm sách mới</h1>
+        <p class="text-white-50 mb-0 small">Sách mới chưa có ai mượn nên số lượng còn lại bằng tổng số lượng.</p>
     </div>
+    <a class="btn-lib btn-lib-ghost" asp-action="Index"><span>← Về kho sách</span></a>
+</section>
+
+<div class="lib-panel p-4">
+    <form asp-action="Create" method="post">
+        <partial name="_BookForm" model="Model" />
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn-lib btn-lib-navy">Lưu sách</button>
+            <a class="btn-lib btn-lib-outline" asp-action="Index">Hủy</a>
+        </div>
+    </form>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

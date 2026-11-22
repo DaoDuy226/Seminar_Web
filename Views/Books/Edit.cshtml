@@ -1,71 +1,32 @@
-﻿@model LibraryManagement.Models.Book
-
+@model Book
 @{
-    ViewData["Title"] = "Chỉnh sửa Sách";
+    ViewData["Title"] = "Sửa sách";
+    var borrowed = Model.Quantity - Model.Available;
 }
 
-<div class="container-fluid px-4 py-3">
-    <div class="mb-4">
-        <span class="badge text-bg-warning text-dark mb-1">Quản trị hệ thống</span>
-        <h1 class="h3 fw-bold mb-1">Chỉnh sửa thông tin sách</h1>
-        <p class="text-muted small mb-0">Cập nhật thông tin chi tiết cho đầu sách trong thư viện.</p>
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Kho sách</span>
+        <h1 class="h3 fw-bold mb-1">Sửa sách #@Model.Id</h1>
+        <p class="text-white-50 mb-0 small">Hiện còn @Model.Available / @Model.Quantity cuốn trong kho, @borrowed cuốn đang được mượn.</p>
     </div>
+    <a class="btn-lib btn-lib-ghost" asp-action="Index"><span>← Về kho sách</span></a>
+</section>
 
-    <div class="card shadow-sm border-0 mb-4 col-md-8">
-        <div class="card-body">
-            <form asp-action="Edit">
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-                <input type="hidden" asp-for="Id" />
-
-                <div class="mb-3">
-                    <label asp-for="Title" class="form-label fw-semibold text-muted">Tên sách</label>
-                    <input asp-for="Title" class="form-control" placeholder="Nhập tên sách..." />
-                    <span asp-validation-for="Title" class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Author" class="form-label fw-semibold text-muted">Tác giả</label>
-                    <input asp-for="Author" class="form-control" placeholder="Nhập tên tác giả..." />
-                    <span asp-validation-for="Author" class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="CategoryId" class="form-label fw-semibold text-muted">Thể loại</label>
-                    <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId"></select>
-                    <span asp-validation-for="CategoryId" class="text-danger"></span>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Quantity" class="form-label fw-semibold text-muted">Tổng số lượng</label>
-                        <input asp-for="Quantity" class="form-control" />
-                        <span asp-validation-for="Quantity" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Available" class="form-label fw-semibold text-muted">Số lượng còn lại</label>
-                        <input asp-for="Available" class="form-control" />
-                        <span asp-validation-for="Available" class="text-danger"></span>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label asp-for="PublishYear" class="form-label fw-semibold text-muted">Năm xuất bản</label>
-                    <input asp-for="PublishYear" class="form-control" />
-                    <span asp-validation-for="PublishYear" class="text-danger"></span>
-                </div>
-
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-warning fw-semibold px-4">Lưu thay đổi</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary px-4">Quay lại danh sách</a>
-                </div>
-            </form>
+<div class="lib-panel p-4">
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+        <input type="hidden" asp-for="Id" />
+        <partial name="_BookForm" model="Model" />
+        <p class="small text-muted mt-3 mb-0">
+            Khi đổi tổng số lượng, số lượng còn lại được tự tính lại (giữ nguyên số cuốn đang được mượn).
+        </p>
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn-lib btn-lib-navy">Lưu thay đổi</button>
+            <a class="btn-lib btn-lib-outline" asp-action="Index">Hủy</a>
         </div>
-    </div>
+    </form>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }

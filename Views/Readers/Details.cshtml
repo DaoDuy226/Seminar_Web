@@ -1,4 +1,4 @@
-﻿@model LibraryManagement.Models.Reader
+@model Reader
 @{
     ViewData["Title"] = "Chi tiết lịch sử mượn sách";
     // Lấy danh sách phiếu mượn liên quan tới độc giả này từ ViewBag hoặc từ Navigation Property
@@ -11,9 +11,10 @@
         <h1 class="h3 fw-bold mb-1">Lịch sử mượn sách: @Model.FullName</h1>
         <p class="text-white-50 mb-0 small">SĐT: @Model.Phone | Email: @Model.Email</p>
     </div>
-    <a class="btn-lib btn-lib-ghost" asp-action="Index">
-        <span>← Về danh sách độc giả</span>
-    </a>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn-lib btn-lib-ghost" asp-action="Index"><span>← Về danh sách độc giả</span></a>
+        <a class="btn-lib btn-lib-amber" asp-action="Edit" asp-route-id="@Model.Id"><span>Sửa thông tin</span></a>
+    </div>
 </section>
 
 <div class="lib-panel">
@@ -53,7 +54,7 @@
                                 {
                                     @foreach (var detail in br.BorrowDetails)
                                     {
-                                        <div>@detail.Book?.Title <span class="text-muted small">(x@detail.Quantity)</span></div>
+                                        <div>@detail.Book?.Title <span class="text-muted small">(x@(detail.Quantity))</span></div>
                                     }
                                 }
                             </td>

@@ -1,47 +1,63 @@
-﻿
+﻿using LibraryManagement.Data;
+using LibraryManagement.Models;
+using LibraryManagement.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using LibraryManagement.Models;
-using LibraryManagement.Data;
+
+namespace LibraryManagement.Controllers;
 
 public class ReadersController : Controller
 {
-    private readonly LibraryDbContext _context;
+    private const string DatabaseErrorMessage =
+        "Chưa kết nối được tới cơ sở dữ liệu. Vui lòng kiểm tra SQL Server và chuỗi kết nối trong README.md.";
 
-    public ReadersController(LibraryDbContext context)
+    private readonly LibraryDbContext _context;
+    private readonly ILogger<ReadersController> _logger;
+
+    public ReadersController(LibraryDbContext context, ILogger<ReadersController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
-    // GET: READERS
-    public async Task<IActionResult> Index(string searchString)
+    // GET: /Readers?search=...
+    public async Task<IActionResult> Index(string? search)
     {
-        ViewData["CurrentFilter"] = searchString;
+        ViewData["CurrentFilter"] = search;
+        var readerSummaries = new List<ReaderSummaryItem>();
 
-        var readersQuery = _context.Readers
-            .Include(r => r.BorrowRecords)
-                .ThenInclude(br => br.BorrowDetails)
-            .AsQueryable();
-
-        if (!String.IsNullOrEmpty(searchString))
+        try
         {
-            readersQuery = readersQuery.Where(r => r.FullName.Contains(searchString) || r.Phone.Contains(searchString));
+            var query = _context.Readers
+                .Include(r => r.BorrowRecords)
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(r => r.FullName.Contains(term) || r.Phone.Contains(term) || r.Email.Contains(term));
+            }
+
+            var readers = await query.OrderBy(r => r.Id).ToListAsync();
+            readerSummaries = readers.Select(r => new ReaderSummaryItem
+            {
+                Reader = r,
+                TotalBorrowCount = r.BorrowRecords.Count,
+                ActiveBorrowCount = r.BorrowRecords.Count(br => br.ReturnDate == null),
+                OverdueBorrowCount = r.BorrowRecords.Count(br => br.IsOverdue)
+            }).ToList();
         }
-
-        var readers = await readersQuery.ToListAsync();
-
-        var readerSummaries = readers.Select(r => new LibraryManagement.Models.ViewModels.ReaderSummaryItem
+        catch (Exception ex)
         {
-            Reader = r,
-            TotalBorrowCount = r.BorrowRecords?.Count ?? 0,
-            ActiveBorrowCount = r.BorrowRecords?.Count(br => br.ReturnDate == null) ?? 0,
-            OverdueBorrowCount = r.BorrowRecords?.Count(br => br.ReturnDate == null && br.DueDate < DateTime.Now) ?? 0
-        }).ToList();
+            _logger.LogError(ex, "Không thể tải danh sách độc giả.");
+            ViewBag.DatabaseError = DatabaseErrorMessage;
+        }
 
         return View(readerSummaries);
     }
 
-    // GET: READERS/Details/5
+    // GET: /Readers/Details/5  (hồ sơ + lịch sử mượn của độc giả)
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -49,49 +65,57 @@ public class ReadersController : Controller
             return NotFound();
         }
 
-        var reader = await _context.Readers
-            .FirstOrDefaultAsync(m => m.Id == id);
-
+        var reader = await _context.Readers.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
         if (reader == null)
         {
             return NotFound();
         }
 
-        // Nạp danh sách phiếu mượn kèm chi tiết sách của riêng độc giả này
-        var borrowRecords = await _context.BorrowRecords
+        ViewBag.BorrowRecords = await _context.BorrowRecords
             .Include(br => br.BorrowDetails)
                 .ThenInclude(bd => bd.Book)
             .Where(br => br.ReaderId == id)
+            .OrderByDescending(br => br.BorrowDate)
+            .AsNoTracking()
             .ToListAsync();
-
-        ViewBag.BorrowRecords = borrowRecords;
 
         return View(reader);
     }
 
-    // GET: READERS/Create
+    // GET: /Readers/Create
     public IActionResult Create()
     {
-        return View();
+        return View(new Reader());
     }
 
-    // POST: READERS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    // POST: /Readers/Create — chỉ bind các trường trên form (chống over-posting)
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,FullName,Phone,Email,BorrowRecords")] Reader reader)
+    public async Task<IActionResult> Create([Bind("FullName,Phone,Email")] Reader reader)
     {
-        if (ModelState.IsValid)
+        await CheckDuplicateAsync(reader);
+        if (!ModelState.IsValid)
+        {
+            return View(reader);
+        }
+
+        try
         {
             _context.Add(reader);
             await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Đã thêm độc giả \"{reader.FullName}\".";
             return RedirectToAction(nameof(Index));
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Không thể thêm độc giả {FullName}.", reader.FullName);
+            ModelState.AddModelError(string.Empty, "Không thể lưu độc giả. Vui lòng kiểm tra dữ liệu và thử lại.");
+        }
+
         return View(reader);
     }
 
-    // GET: READERS/Edit/5
+    // GET: /Readers/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -100,49 +124,51 @@ public class ReadersController : Controller
         }
 
         var reader = await _context.Readers.FindAsync(id);
-        if (reader == null)
-        {
-            return NotFound();
-        }
-        return View(reader);
+        return reader == null ? NotFound() : View(reader);
     }
 
-    // POST: READERS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    // POST: /Readers/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("Id,FullName,Phone,Email,BorrowRecords")] Reader reader)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,FullName,Phone,Email")] Reader reader)
     {
         if (id != reader.Id)
         {
             return NotFound();
         }
 
-        if (ModelState.IsValid)
+        var existing = await _context.Readers.FindAsync(id);
+        if (existing == null)
         {
-            try
-            {
-                _context.Update(reader);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ReaderExists(reader.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            return NotFound();
+        }
+
+        await CheckDuplicateAsync(reader);
+        if (!ModelState.IsValid)
+        {
+            return View(reader);
+        }
+
+        existing.FullName = reader.FullName;
+        existing.Phone = reader.Phone;
+        existing.Email = reader.Email;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Đã cập nhật độc giả \"{existing.FullName}\".";
             return RedirectToAction(nameof(Index));
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Không thể cập nhật độc giả {ReaderId}.", id);
+            ModelState.AddModelError(string.Empty, "Không thể lưu thay đổi. Vui lòng thử lại.");
+        }
+
         return View(reader);
     }
 
-    // GET: READERS/Delete/5
+    // GET: /Readers/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -150,20 +176,20 @@ public class ReadersController : Controller
             return NotFound();
         }
 
-        var reader = await _context.Readers
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var reader = await _context.Readers.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
         if (reader == null)
         {
             return NotFound();
         }
 
+        ViewBag.BorrowCount = await _context.BorrowRecords.CountAsync(br => br.ReaderId == id);
         return View(reader);
     }
 
-    // POST: READERS/Delete/5
+    // POST: /Readers/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int? id)
+    public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var reader = await _context.Readers.FindAsync(id);
         if (reader == null)
@@ -171,23 +197,32 @@ public class ReadersController : Controller
             return NotFound();
         }
 
-        // Kiểm tra trực tiếp trong bảng BorrowRecords xem độc giả này có phiếu mượn nào không
-        bool hasActiveBorrows = await _context.BorrowRecords.AnyAsync(br => br.ReaderId == id);
-
-        if (hasActiveBorrows)
+        // Không xóa độc giả đã có phiếu mượn để giữ nguyên lịch sử mượn trả.
+        if (await _context.BorrowRecords.AnyAsync(br => br.ReaderId == id))
         {
-            TempData["ErrorMessage"] = $"Không thể xóa độc giả '{reader.FullName}' vì thành viên này đang có phiếu mượn sách trong hệ thống!";
+            TempData["ErrorMessage"] = $"Không thể xóa độc giả \"{reader.FullName}\" vì độc giả đã có phiếu mượn trong hệ thống.";
             return RedirectToAction(nameof(Index));
         }
 
         _context.Readers.Remove(reader);
         await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Đã xóa độc giả thành công!";
+        TempData["SuccessMessage"] = $"Đã xóa độc giả \"{reader.FullName}\".";
         return RedirectToAction(nameof(Index));
     }
 
-    private bool ReaderExists(int? id)
+    // Email và SĐT có unique index trong CSDL: báo lỗi thân thiện thay vì để SaveChanges ném exception.
+    private async Task CheckDuplicateAsync(Reader reader)
     {
-        return _context.Readers.Any(e => e.Id == id);
+        if (!string.IsNullOrWhiteSpace(reader.Phone) &&
+            await _context.Readers.AnyAsync(r => r.Phone == reader.Phone && r.Id != reader.Id))
+        {
+            ModelState.AddModelError(nameof(Reader.Phone), "Số điện thoại này đã được dùng cho độc giả khác.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(reader.Email) &&
+            await _context.Readers.AnyAsync(r => r.Email == reader.Email && r.Id != reader.Id))
+        {
+            ModelState.AddModelError(nameof(Reader.Email), "Email này đã được dùng cho độc giả khác.");
+        }
     }
 }
