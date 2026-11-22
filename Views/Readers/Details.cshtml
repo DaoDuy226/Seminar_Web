@@ -1,0 +1,76 @@
+﻿@model LibraryManagement.Models.Reader
+@{
+    ViewData["Title"] = "Chi tiết lịch sử mượn sách";
+    // Lấy danh sách phiếu mượn liên quan tới độc giả này từ ViewBag hoặc từ Navigation Property
+    var borrowRecords = ViewBag.BorrowRecords as List<LibraryManagement.Models.BorrowRecord> ?? new List<LibraryManagement.Models.BorrowRecord>();
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-info text-dark mb-2">Hồ sơ thành viên</span>
+        <h1 class="h3 fw-bold mb-1">Lịch sử mượn sách: @Model.FullName</h1>
+        <p class="text-white-50 mb-0 small">SĐT: @Model.Phone | Email: @Model.Email</p>
+    </div>
+    <a class="btn-lib btn-lib-ghost" asp-action="Index">
+        <span>← Về danh sách độc giả</span>
+    </a>
+</section>
+
+<div class="lib-panel">
+    <div class="table-responsive">
+        <table class="table lib-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Chi tiết sách mượn</th>
+                    <th>Ngày mượn</th>
+                    <th>Hạn trả</th>
+                    <th>Ngày trả thực tế</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!borrowRecords.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">Độc giả này chưa có lịch sử mượn sách nào.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var br in borrowRecords)
+                    {
+                        var badgeClass = br.EffectiveStatus switch
+                        {
+                            BorrowStatuses.Overdue => "text-bg-danger",
+                            BorrowStatuses.Returned => "text-bg-success",
+                            _ => "text-bg-warning"
+                        };
+                        <tr>
+                            <td class="fw-semibold">#@br.Id</td>
+                            <td>
+                                @if (br.BorrowDetails != null)
+                                {
+                                    @foreach (var detail in br.BorrowDetails)
+                                    {
+                                        <div>@detail.Book?.Title <span class="text-muted small">(x@detail.Quantity)</span></div>
+                                    }
+                                }
+                            </td>
+                            <td>@br.BorrowDate.ToString("dd/MM/yyyy")</td>
+                            <td>@br.DueDate.ToString("dd/MM/yyyy")</td>
+                            <td>@(br.ReturnDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                            <td>
+                                <span class="badge rounded-pill @badgeClass">@br.EffectiveStatus</span>
+                                @if (br.IsOverdue)
+                                {
+                                    <div class="small text-danger mt-1">Trễ @br.OverdueDays ngày</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
