@@ -1,35 +1,84 @@
-﻿
-using LibraryManagement.Data;
+﻿using LibraryManagement.Data;
 using LibraryManagement.Models;
+using LibraryManagement.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
+namespace LibraryManagement.Controllers;
+
 public class BooksController : Controller
 {
-    private readonly LibraryDbContext _context;
+    private const string DatabaseErrorMessage =
+        "Chưa kết nối được tới cơ sở dữ liệu. Vui lòng kiểm tra SQL Server và chuỗi kết nối trong README.md.";
 
-    public BooksController(LibraryDbContext context)
+    private readonly LibraryDbContext _context;
+    private readonly ILogger<BooksController> _logger;
+
+    public BooksController(LibraryDbContext context, ILogger<BooksController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
-    // GET: BOOKS
-    public async Task<IActionResult> Index(string searchString)
+    // GET: /Books?search=...&categoryId=...&availability=all|available|borrowed
+    public async Task<IActionResult> Index(string? search, int? categoryId, string availability = "all")
     {
-        ViewData["CurrentFilter"] = searchString;
-
-        var booksQuery = _context.Books.Include(b => b.Category).AsQueryable();
-
-        if (!String.IsNullOrEmpty(searchString))
+        var vm = new BooksCatalogViewModel
         {
-            booksQuery = booksQuery.Where(s => s.Title.Contains(searchString) || s.Author.Contains(searchString));
+            SearchTerm = search?.Trim(),
+            SelectedCategoryId = categoryId,
+            AvailabilityFilter = availability
+        };
+
+        try
+        {
+            vm.Categories = await _context.Categories
+                .Include(c => c.Books)
+                .OrderBy(c => c.Name)
+                .AsNoTracking()
+                .ToListAsync();
+
+            var query = _context.Books
+                .Include(b => b.Category)
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(vm.SearchTerm))
+            {
+                var term = vm.SearchTerm;
+                query = query.Where(b =>
+                    b.Title.Contains(term) ||
+                    b.Author.Contains(term) ||
+                    (b.Category != null && b.Category.Name.Contains(term)));
+            }
+
+            if (categoryId is > 0)
+            {
+                query = query.Where(b => b.CategoryId == categoryId.Value);
+            }
+
+            if (availability == "available")
+            {
+                query = query.Where(b => b.Available > 0);
+            }
+            else if (availability == "borrowed")
+            {
+                query = query.Where(b => b.Available < b.Quantity);
+            }
+
+            vm.Books = await query.OrderBy(b => b.Id).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Không thể tải danh mục sách.");
+            ViewBag.DatabaseError = DatabaseErrorMessage;
         }
 
-        return View(await booksQuery.ToListAsync());
+        return View(vm);
     }
 
-    // GET: BOOKS/Details/5
+    // GET: /Books/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -39,38 +88,52 @@ public class BooksController : Controller
 
         var book = await _context.Books
             .Include(b => b.Category)
+            .AsNoTracking()
             .FirstOrDefaultAsync(m => m.Id == id);
-        if (book == null)
-        {
-            return NotFound();
-        }
 
-        return View(book);
+        return book == null ? NotFound() : View(book);
     }
 
-    // GET: BOOKS/Create
-    public IActionResult Create()
+    // GET: /Books/Create
+    public async Task<IActionResult> Create()
     {
-        return View();
+        await LoadCategoriesAsync();
+        return View(new Book { Quantity = 1, PublishYear = DateTime.Today.Year });
     }
 
-    // POST: BOOKS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    // POST: /Books/Create
+    // Chỉ bind các trường người dùng được nhập (chống over-posting).
+    // Sách mới chưa ai mượn nên Available = Quantity, do server tự gán.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,Title,Author,CategoryId,Category,Quantity,Available,PublishYear,BorrowDetails")] Book book)
+    public async Task<IActionResult> Create([Bind("Title,Author,CategoryId,Quantity,PublishYear")] Book book)
     {
-        if (ModelState.IsValid)
+        book.Available = book.Quantity;
+
+        if (!ModelState.IsValid)
+        {
+            await LoadCategoriesAsync(book.CategoryId);
+            return View(book);
+        }
+
+        try
         {
             _context.Add(book);
             await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Đã thêm sách \"{book.Title}\".";
             return RedirectToAction(nameof(Index));
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Không thể thêm sách {Title}.", book.Title);
+            ModelState.AddModelError(string.Empty, "Không thể lưu sách. Vui lòng kiểm tra dữ liệu và thử lại.");
+        }
+
+        await LoadCategoriesAsync(book.CategoryId);
         return View(book);
     }
 
-    // GET: BOOKS/Edit/5
+    // GET: /Books/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -83,46 +146,76 @@ public class BooksController : Controller
         {
             return NotFound();
         }
-        ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
+
+        await LoadCategoriesAsync(book.CategoryId);
         return View(book);
     }
 
-    // POST: BOOKS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    // POST: /Books/Edit/5
+    // Nạp bản ghi từ CSDL rồi gán từng trường (không dùng Update(book)),
+    // để EF so sánh đúng giá trị gốc của Available/Quantity (concurrency token)
+    // và để số sách đang được mượn không bị ghi đè.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("Id,Title,Author,CategoryId,Category,Quantity,Available,PublishYear,BorrowDetails")] Book book)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,CategoryId,Quantity,PublishYear")] Book book)
     {
         if (id != book.Id)
         {
             return NotFound();
         }
 
-        if (ModelState.IsValid)
+        var existing = await _context.Books.FindAsync(id);
+        if (existing == null)
         {
-            try
-            {
-                _context.Update(book);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BookExists(book.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            return NotFound();
+        }
+
+        var borrowedCopies = existing.Quantity - existing.Available;
+        if (book.Quantity < borrowedCopies)
+        {
+            ModelState.AddModelError(nameof(Book.Quantity),
+                $"Đang có {borrowedCopies} cuốn được mượn, tổng số lượng không được nhỏ hơn {borrowedCopies}.");
+        }
+
+        // Available không có trên form: hiển thị lại giá trị hiện tại khi phải trả về form.
+        book.Available = existing.Available;
+        ModelState.Remove(nameof(Book.Available));
+
+        if (!ModelState.IsValid)
+        {
+            await LoadCategoriesAsync(book.CategoryId);
+            return View(book);
+        }
+
+        existing.Title = book.Title;
+        existing.Author = book.Author;
+        existing.CategoryId = book.CategoryId;
+        existing.PublishYear = book.PublishYear;
+        existing.Quantity = book.Quantity;
+        existing.Available = book.Quantity - borrowedCopies;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Đã cập nhật sách \"{existing.Title}\".";
             return RedirectToAction(nameof(Index));
         }
+        catch (DbUpdateConcurrencyException)
+        {
+            ModelState.AddModelError(string.Empty,
+                "Tồn kho của sách vừa thay đổi (có phiếu mượn/trả mới). Vui lòng tải lại trang và sửa lại.");
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Không thể cập nhật sách {BookId}.", id);
+            ModelState.AddModelError(string.Empty, "Không thể lưu thay đổi. Vui lòng thử lại.");
+        }
+
+        await LoadCategoriesAsync(book.CategoryId);
         return View(book);
     }
 
-    // GET: BOOKS/Delete/5
+    // GET: /Books/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -131,45 +224,44 @@ public class BooksController : Controller
         }
 
         var book = await _context.Books
+            .Include(b => b.Category)
+            .AsNoTracking()
             .FirstOrDefaultAsync(m => m.Id == id);
-        if (book == null)
-        {
-            return NotFound();
-        }
 
-        return View(book);
+        return book == null ? NotFound() : View(book);
     }
 
-    // POST: BOOKS/Delete/5
+    // POST: /Books/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int? id)
+    public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var book = await _context.Books
-        .Include(b => b.BorrowDetails) // Nạp bảng chi tiết mượn sách liên quan
-        .FirstOrDefaultAsync(b => b.Id == id);
+            .Include(b => b.BorrowDetails)
+            .FirstOrDefaultAsync(b => b.Id == id);
 
         if (book == null)
         {
             return NotFound();
         }
 
-        // Kiểm tra xem sách có đang nằm trong phiếu mượn nào chưa trả không
-        bool isBorrowed = book.BorrowDetails != null && book.BorrowDetails.Any();
-        if (isBorrowed)
+        // Không xóa sách đã xuất hiện trong bất kỳ phiếu mượn nào (kể cả phiếu đã trả)
+        // để giữ nguyên lịch sử mượn trả.
+        if (book.BorrowDetails.Any())
         {
-            TempData["ErrorMessage"] = $"Không thể xóa sách '{book.Title}' vì đầu sách này đang có liên quan đến phiếu mượn trong hệ thống!";
+            TempData["ErrorMessage"] = $"Không thể xóa sách \"{book.Title}\" vì sách đã có trong lịch sử phiếu mượn.";
             return RedirectToAction(nameof(Index));
         }
 
         _context.Books.Remove(book);
         await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Đã xóa sách thành công!";
+        TempData["SuccessMessage"] = $"Đã xóa sách \"{book.Title}\".";
         return RedirectToAction(nameof(Index));
     }
 
-    private bool BookExists(int? id)
+    private async Task LoadCategoriesAsync(int? selectedId = null)
     {
-        return _context.Books.Any(e => e.Id == id);
+        var categories = await _context.Categories.OrderBy(c => c.Name).AsNoTracking().ToListAsync();
+        ViewData["CategoryId"] = new SelectList(categories, "Id", "Name", selectedId);
     }
 }
