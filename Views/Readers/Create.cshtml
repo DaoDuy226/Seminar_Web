@@ -1,0 +1,27 @@
+@model Reader
+@{
+    ViewData["Title"] = "Thêm độc giả";
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Độc giả</span>
+        <h1 class="h3 fw-bold mb-1">Thêm độc giả mới</h1>
+        <p class="text-white-50 mb-0 small">Số điện thoại và email không được trùng với độc giả khác.</p>
+    </div>
+    <a class="btn-lib btn-lib-ghost" asp-action="Index"><span>← Về danh sách độc giả</span></a>
+</section>
+
+<div class="lib-panel p-4">
+    <form asp-action="Create" method="post">
+        <partial name="_ReaderForm" model="Model" />
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn-lib btn-lib-navy">Lưu độc giả</button>
+            <a class="btn-lib btn-lib-outline" asp-action="Index">Hủy</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

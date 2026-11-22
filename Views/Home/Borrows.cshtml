@@ -9,15 +9,15 @@
         <h1 class="h3 fw-bold mb-1">Tất cả Phiếu Mượn / Trả (@Model.Count)</h1>
         <p class="text-white-50 mb-0 small">Danh sách toàn bộ phiếu mượn sách trong hệ thống.</p>
     </div>
-    <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index">
-        <span>← Về Dashboard</span>
-    </a>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index"><span>← Về Dashboard</span></a>
+        <a class="btn-lib btn-lib-amber" asp-controller="Borrows" asp-action="Create"><span>+ Lập phiếu mượn</span></a>
+    </div>
 </section>
 
-@if (ViewBag.DatabaseError != null)
-{
-    <div class="alert alert-danger">@ViewBag.DatabaseError</div>
-}
+<partial name="_StatusMessages" />
+
+<partial name="_DatabaseErrorAlert" />
 
 <div class="lib-panel">
     <div class="table-responsive">
@@ -31,9 +31,14 @@
                     <th>Hạn trả</th>
                     <th>Ngày trả thực tế</th>
                     <th>Trạng thái</th>
+                    <th>Thao tác</th>
                 </tr>
             </thead>
             <tbody>
+                @if (Model.Count == 0 && ViewBag.DatabaseError == null)
+                {
+                    <tr><td colspan="8" class="text-center text-muted">Chưa có phiếu mượn.</td></tr>
+                }
                 @foreach (var br in Model)
                 {
                     var badgeClass = br.EffectiveStatus switch
@@ -51,7 +56,7 @@
                         <td>
                             @foreach (var detail in br.BorrowDetails)
                             {
-                                <div>@detail.Book?.Title <span class="text-muted small">(x@detail.Quantity)</span></div>
+                                <div>@detail.Book?.Title <span class="text-muted small">(x@(detail.Quantity))</span></div>
                             }
                         </td>
                         <td>@br.BorrowDate.ToString("dd/MM/yyyy")</td>
@@ -62,6 +67,15 @@
                             @if (br.IsOverdue)
                             {
                                 <div class="small text-danger mt-1">Trễ @br.OverdueDays ngày</div>
+                            }
+                        </td>
+                        <td>
+                            @if (br.ReturnDate == null)
+                            {
+                                <form asp-controller="Borrows" asp-action="Return" asp-route-id="@br.Id" method="post">
+                                    <button class="btn btn-sm btn-outline-primary text-nowrap" type="submit"
+                                            aria-label="Xác nhận trả phiếu #@br.Id">Xác nhận trả</button>
+                                </form>
                             }
                         </td>
                     </tr>

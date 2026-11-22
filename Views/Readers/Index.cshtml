@@ -1,0 +1,89 @@
+@model List<ReaderSummaryItem>
+@{
+    ViewData["Title"] = "Độc giả";
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Thành viên thư viện</span>
+        <h1 class="h3 fw-bold mb-1">Danh sách Độc giả (@Model.Count)</h1>
+        <p class="text-white-50 mb-0 small">Thông tin liên hệ, tình trạng mượn sách; thêm, sửa, xóa độc giả.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn-lib btn-lib-ghost" asp-controller="Home" asp-action="Index"><span>← Về Dashboard</span></a>
+        <a class="btn-lib btn-lib-amber" asp-action="Create"><span>+ Thêm độc giả</span></a>
+    </div>
+</section>
+
+<partial name="_StatusMessages" />
+<partial name="_DatabaseErrorAlert" />
+
+<div class="lib-panel p-3 p-md-4 mb-4">
+    <form method="get" asp-controller="Readers" asp-action="Index" class="row g-3 align-items-end">
+        <div class="col-md-10">
+            <label class="form-label fw-semibold small" for="search">Tìm kiếm độc giả</label>
+            <input id="search" name="search" value="@ViewData["CurrentFilter"]" class="form-control"
+                   placeholder="Nhập họ tên, số điện thoại hoặc email..." />
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn-lib btn-lib-navy w-100">Tìm</button>
+            <a class="btn-lib btn-lib-outline" asp-controller="Readers" asp-action="Index" title="Xóa bộ lọc">↺</a>
+        </div>
+    </form>
+</div>
+
+<div class="lib-panel">
+    <div class="table-responsive">
+        <table class="table lib-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Họ và tên</th>
+                    <th>Số điện thoại</th>
+                    <th>Email</th>
+                    <th class="text-center">Tổng lượt mượn</th>
+                    <th class="text-center">Tình trạng</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center py-4 text-muted">Không tìm thấy độc giả nào phù hợp.</td></tr>
+                }
+                else
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-muted">#@item.Reader.Id</td>
+                            <td class="fw-semibold">@item.Reader.FullName</td>
+                            <td>@item.Reader.Phone</td>
+                            <td>@item.Reader.Email</td>
+                            <td class="text-center">@item.TotalBorrowCount</td>
+                            <td class="text-center">
+                                @if (item.OverdueBorrowCount > 0)
+                                {
+                                    <span class="badge rounded-pill text-bg-danger">Có @item.OverdueBorrowCount phiếu quá hạn</span>
+                                }
+                                else if (item.ActiveBorrowCount > 0)
+                                {
+                                    <span class="badge rounded-pill text-bg-warning">Đang mượn (@item.ActiveBorrowCount)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge rounded-pill text-bg-success">Không nợ sách</span>
+                                }
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@item.Reader.Id">Lịch sử mượn</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Reader.Id">Sửa</a>
+                                <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@item.Reader.Id">Xóa</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

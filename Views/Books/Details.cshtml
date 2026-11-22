@@ -1,0 +1,41 @@
+@model Book
+@{
+    ViewData["Title"] = "Chi tiết sách";
+}
+
+<section class="lib-page-header mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <span class="badge text-bg-warning text-dark mb-2">Kho sách</span>
+        <h1 class="h3 fw-bold mb-1">@Model.Title</h1>
+        <p class="text-white-50 mb-0 small">Tác giả: @Model.Author</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn-lib btn-lib-ghost" asp-action="Index"><span>← Về kho sách</span></a>
+        <a class="btn-lib btn-lib-amber" asp-action="Edit" asp-route-id="@Model.Id"><span>Sửa sách</span></a>
+    </div>
+</section>
+
+<div class="lib-panel p-4">
+    <dl class="row mb-0">
+        <dt class="col-sm-3 text-muted">Mã sách</dt>
+        <dd class="col-sm-9">#@Model.Id</dd>
+        <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(m => m.Title)</dt>
+        <dd class="col-sm-9 fw-semibold">@Model.Title</dd>
+        <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(m => m.Author)</dt>
+        <dd class="col-sm-9">@Model.Author</dd>
+        <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(m => m.CategoryId)</dt>
+        <dd class="col-sm-9">
+            <a class="badge rounded-pill text-bg-light border text-decoration-none text-dark"
+               asp-action="Index" asp-route-categoryId="@Model.CategoryId">@(Model.Category?.Name ?? "Chưa phân loại")</a>
+        </dd>
+        <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(m => m.PublishYear)</dt>
+        <dd class="col-sm-9">@Model.PublishYear</dd>
+        <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(m => m.Quantity)</dt>
+        <dd class="col-sm-9">@Model.Quantity</dd>
+        <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(m => m.Available)</dt>
+        <dd class="col-sm-9 mb-0">
+            <span class="badge rounded-pill @(Model.Available > 0 ? "text-bg-success" : "text-bg-danger")">@Model.Available</span>
+            <span class="small text-muted ms-2">(@(Model.Quantity - Model.Available) cuốn đang được mượn)</span>
+        </dd>
+    </dl>
+</div>

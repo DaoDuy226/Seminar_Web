@@ -15,10 +15,7 @@
     </a>
 </section>
 
-@if (ViewBag.DatabaseError != null)
-{
-    <div class="alert alert-danger">@ViewBag.DatabaseError</div>
-}
+<partial name="_DatabaseErrorAlert" />
 
 <div class="row g-4">
     @for (var i = 0; i < Model.Count; i++)
@@ -28,7 +25,7 @@
         var totalCopies = cat.Books.Sum(b => b.Quantity);
         var availableCopies = cat.Books.Sum(b => b.Available);
         <div class="col-md-6 col-lg-4">
-            <a class="lib-card-link" asp-controller="Home" asp-action="Books" asp-route-categoryId="@cat.Id">
+            <a class="lib-card-link" asp-controller="Books" asp-action="Index" asp-route-categoryId="@cat.Id">
                 <div class="lib-interactive-card @theme p-4 d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span class="badge rounded-pill text-bg-light border px-3 py-2">@cat.Books.Count đầu sách</span>
