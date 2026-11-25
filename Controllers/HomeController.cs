@@ -62,16 +62,32 @@ public class HomeController : Controller
         return View(categories);
     }
 
-    public async Task<IActionResult> Borrows()
+    // GET: /Home/Borrows?search=...  (tìm theo mã phiếu, độc giả, SĐT hoặc tên sách)
+    public async Task<IActionResult> Borrows(string? search)
     {
+        ViewData["CurrentFilter"] = search;
         var borrowRecords = new List<BorrowRecord>();
 
         try
         {
-            borrowRecords = await _context.BorrowRecords
+            var query = _context.BorrowRecords
                 .Include(br => br.Reader)
                 .Include(br => br.BorrowDetails)
                     .ThenInclude(bd => bd.Book)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                var hasId = int.TryParse(term.TrimStart('#'), out var borrowId);
+                query = query.Where(br =>
+                    (hasId && br.Id == borrowId) ||
+                    br.Reader!.FullName.Contains(term) ||
+                    br.Reader!.Phone.Contains(term) ||
+                    br.BorrowDetails.Any(bd => bd.Book!.Title.Contains(term)));
+            }
+
+            borrowRecords = await query
                 .OrderByDescending(br => br.BorrowDate)
                 .ThenBy(br => br.Id)
                 .AsNoTracking()
